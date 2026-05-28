@@ -457,11 +457,13 @@ body.light .quote-bar{color:#fff}
         <div class="gq">
           <div class="gl">What's the goal of this text?</div>
           <div class="gopts" id="tq-goal">
-            <div class="gopt" onclick="setTOpt('goal',this,'just start a natural conversation and stay top of mind')">💬 Stay top of mind</div>
-            <div class="gopt" onclick="setTOpt('goal',this,'organically ask if they know anyone thinking about buying or selling')">🙏 Ask for a referral</div>
-            <div class="gopt" onclick="setTOpt('goal',this,'gently find out if they are thinking about making a move')">🏡 See if they\'re moving</div>
-            <div class="gopt" onclick="setTOpt('goal',this,'set up a time to grab coffee or catch up in person')">☕ Set up a meetup</div>
+            <div class="gopt" onclick="setTOpt('goal',this,'referral_ask')">🙏 Ask for a referral — direct & confident</div>
+            <div class="gopt" onclick="setTOpt('goal',this,'genuine_checkin')">❤️ Genuine check-in — no business ask at all</div>
+            <div class="gopt" onclick="setTOpt('goal',this,'follow_up')">🔄 Follow up on a previous real estate convo</div>
+            <div class="gopt" onclick="setTOpt('goal',this,'reconnect')">🔁 Reconnect — just reaching back out</div>
+            <div class="gopt" onclick="setTOpt('goal',this,'meetup')">☕ Set up a coffee or catch-up</div>
           </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic">Never mix a genuine check-in with a business ask — pick one or the other.</div>
         </div>
 
         <div class="gq" id="tq-name-wrap">
@@ -1291,26 +1293,29 @@ async function generateText(){
   btn.innerHTML='<span class="ldots"><span></span><span></span><span></span></span>';
   out.classList.remove('show');
 
+  const goalInstructions = {
+    referral_ask: `Write a direct, confident referral ask. The agent is growing their real estate business and they know they're good at it. They're asking this person to refer anyone they know who might be thinking about buying or selling. Be upfront — no fake small talk before the ask, no pretending this is just a friendly check-in. It's a business ask and that's okay. Be warm and genuine ABOUT the ask itself, not before it. Example tone: "Hey, purely business — I'm growing my real estate business and I know I'm really good at what I do. If you know anyone even remotely thinking about buying or selling, I'd love if you connected us. I'd really appreciate it." Adapt this naturally for the relationship.`,
+    genuine_checkin: `Write a genuine personal check-in with ZERO business agenda. Ask about their life, something personal, something real. No real estate mention whatsoever. This is purely human connection. If you sneak in ANY business ask, you've failed.`,
+    follow_up: `Follow up on a previous real estate conversation. They've already talked — this is a natural next step. Be direct about where things stand and what the next move is.`,
+    reconnect: `Reconnect after time apart. Acknowledge the gap naturally — don't pretend it hasn't been a while. Keep it real and warm. No business ask.`,
+    meetup: `Ask to grab coffee or catch up in person. Keep it casual and genuine. One clear ask, no fluff.`
+  };
+
   const prompt=`You are writing a real text message for a Utah real estate agent at Sonder Legacy.
 
 Person: ${tOpts.who}${name?' named '+name:''}
 Context: ${tOpts.context}
-Goal: ${tOpts.goal}
 
-TONE GUIDE — This agent texts like a real person, not a salesperson. Here's an example of how they actually text when asking for referrals from a friend:
-"Hey! This is purely business. I'm working on growing my real estate business and I'm wondering if you know anyone who even has a remote interest in buying or selling right now. If you're comfortable and trust my work, please connect us."
+WHAT TO WRITE:
+${goalInstructions[tOpts.goal]||tOpts.goal}
 
-Use this as your north star for tone: direct, warm, honest about the ask, no fluff, no fake small talk before the ask, real human energy.
-
-Rules:
-- 1-4 sentences max — this is a TEXT
-- If the goal involves asking for business or referrals — be upfront and genuine about it like the example above, don't hide behind fake small talk
-- If it's a check-in with no business ask — keep it genuinely personal, ask about their life, zero real estate mention
-- If reconnecting — acknowledge the time gap naturally, don't pretend it hasn't been a while
-- If past client — reference the shared experience warmly
-- NEVER use: "I hope this finds you well", "Just wanted to reach out", "Touching base", "Circling back", "Hope you're doing amazing"
+RULES — non-negotiable:
+- 1-4 sentences max. This is a TEXT.
+- Never mix a genuine check-in with a business ask in the same message. Pick one.
+- Never use: "I hope this finds you well", "Just wanted to reach out", "Touching base", "Circling back", "Hope you're doing amazing", "I wanted to check in and also..."
 - Sound like a real person texting a real person
-- No emojis unless it feels natural
+- Be confident, not apologetic about business asks
+- No emojis unless it genuinely fits
 
 Write ONLY the text. No quotes, no explanation.`;
 
