@@ -474,21 +474,9 @@ body.light .quote-bar{color:#fff}
         <div class="post-out" id="text-out">
           <div class="post-out-lbl">Your text — ready to send</div>
           <div class="post-txt" id="text-txt"></div>
-          <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;margin-top:14px">
-            <div>
-              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">On your computer</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="copy-btn" onclick="copyText()" id="copy-text-btn">📋 Copy to clipboard</button>
-                <button class="copy-btn" style="background:var(--surface2);border-color:var(--border2);color:var(--muted)" onclick="resetTextGen()">🔄 Start over</button>
-              </div>
-            </div>
-            <div style="text-align:center">
-              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Phone not connected?</div>
-              <div style="background:#fff;padding:8px;border-radius:10px;display:inline-block">
-                <img id="qr-img" src="" width="100" height="100" style="display:block;border-radius:4px">
-              </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:6px">Scan → opens Messages on iPhone</div>
-            </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+            <button class="copy-btn" onclick="copyText()" id="copy-text-btn">📋 Copy to clipboard</button>
+            <button class="copy-btn" style="background:var(--surface2);border-color:var(--border2);color:var(--muted)" onclick="resetTextGen()">🔄 Start over</button>
           </div>
         </div>
       </div>
@@ -1305,20 +1293,26 @@ async function generateText(){
 
   const prompt=`You are writing a real text message for a Utah real estate agent at Sonder Legacy.
 
-Person receiving the text: ${tOpts.who}${name?' named '+name:''}
+Person: ${tOpts.who}${name?' named '+name:''}
 Context: ${tOpts.context}
-Goal of the text: ${tOpts.goal}
+Goal: ${tOpts.goal}
 
-Write ONE short, natural text message that:
-- Sounds completely human — not salesy, not scripted, not corporate
-- Is warm, genuine and conversational
-- Is 1-3 sentences max — this is a TEXT not an email
-- Does NOT mention real estate unless the context naturally calls for it
-- Does NOT say "I hope this message finds you well" or any cliché opener
-- If asking about real estate, makes it feel like a natural question, not a pitch
-- Feels like it came from a real person who genuinely cares
+TONE GUIDE — This agent texts like a real person, not a salesperson. Here's an example of how they actually text when asking for referrals from a friend:
+"Hey! This is purely business. I'm working on growing my real estate business and I'm wondering if you know anyone who even has a remote interest in buying or selling right now. If you're comfortable and trust my work, please connect us."
 
-Write ONLY the text message. No quotes around it, no explanation, no preamble.`;
+Use this as your north star for tone: direct, warm, honest about the ask, no fluff, no fake small talk before the ask, real human energy.
+
+Rules:
+- 1-4 sentences max — this is a TEXT
+- If the goal involves asking for business or referrals — be upfront and genuine about it like the example above, don't hide behind fake small talk
+- If it's a check-in with no business ask — keep it genuinely personal, ask about their life, zero real estate mention
+- If reconnecting — acknowledge the time gap naturally, don't pretend it hasn't been a while
+- If past client — reference the shared experience warmly
+- NEVER use: "I hope this finds you well", "Just wanted to reach out", "Touching base", "Circling back", "Hope you're doing amazing"
+- Sound like a real person texting a real person
+- No emojis unless it feels natural
+
+Write ONLY the text. No quotes, no explanation.`;
 
   try{
     const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:300,messages:[{role:'user',content:prompt}]})});
@@ -1326,12 +1320,6 @@ Write ONLY the text message. No quotes around it, no explanation, no preamble.`;
     const generatedText=data.content.map(b=>b.text||'').join('').trim();
     txt.textContent=generatedText;
     out.classList.add('show');
-    // QR code via Google Charts API — reliable, no library needed
-    const smsLink='sms:?body='+encodeURIComponent(generatedText);
-    const qrImg=document.getElementById('qr-img');
-    if(qrImg){
-      qrImg.src='https://api.qrserver.com/v1/create-qr-code/?size=100x100&data='+encodeURIComponent(smsLink);
-    }
   }catch(e){
     txt.textContent='Something went wrong. Please try again.';
     out.classList.add('show');
