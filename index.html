@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sonder Legacy CRM</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 
@@ -1025,10 +1026,10 @@ function renderSocial(){
     </div>`).join('');
 }
 
-function toggleStory(idx){state[idx].story=!state[idx].story;renderBroker();renderSocial();if(currentAgent===idx)renderAgentView(idx);updateDots();}
+function toggleStory(idx){state[idx].story=!state[idx].story;renderBroker();renderSocial();if(currentAgent===idx)renderAgentView(idx);updateDots();saveAgentData(idx);}
 function toggleWeekPost(idx){state[idx].weekPost=!state[idx].weekPost;renderSocial();}
-function upd(idx,key,val){state[idx][key]=Math.max(0,val||0);renderBroker();renderAgentView(idx);updateDots();}
-function submitDay(idx){state[idx].submitted=true;renderAgentView(idx);renderBroker();updateDots();}
+function upd(idx,key,val){state[idx][key]=Math.max(0,val||0);renderBroker();renderAgentView(idx);updateDots();saveAgentData(idx);}
+function submitDay(idx){state[idx].submitted=true;renderAgentView(idx);renderBroker();updateDots();saveAgentData(idx);}
 function updateDots(){agents.forEach((a,i)=>{const d=document.getElementById('dot-'+i);if(!d)return;d.style.background=state[i].submitted?'var(--teal)':status(state[i]).c==='b-behind'?'var(--red)':a.color;});}
 async function generateBrief(idx){
   const a=agents[idx];const s=state[idx];
@@ -1444,7 +1445,7 @@ function initLogin(){
   `).join('');
 }
 
-function selectLoginAgent(name,el){
+async function selectLoginAgent(name,el){
   loginAgent=name;
   pinEntry='';
   tempPin='';
@@ -1453,15 +1454,17 @@ function selectLoginAgent(name,el){
   el.classList.add('sel');
   updatePinDots();
   document.getElementById('login-msg').textContent='';
-  const stored=localStorage.getItem('sl-pin-'+name);
   const prompt=document.getElementById('pin-prompt');
   if(MASTER_AGENTS.includes(name)){
     prompt.textContent='Enter your master pin to access everything.';
-  } else if(!stored){
-    settingPin=true;
-    prompt.textContent='Welcome '+name+'! Create your 4-digit pin to secure your account.';
   } else {
-    prompt.textContent='Enter your pin to access your dashboard.';
+    const stored=await getPin(name);
+    if(!stored){
+      settingPin=true;
+      prompt.textContent='Welcome '+name+'! Create your 4-digit pin to secure your account.';
+    } else {
+      prompt.textContent='Enter your pin to access your dashboard.';
+    }
   }
   document.getElementById('pin-section').style.display='block';
 }
@@ -1487,44 +1490,29 @@ function updatePinDots(){
   }
 }
 
-function checkPin(){
+async function checkPin(){
   const msg=document.getElementById('login-msg');
-  // Master pin — access everything
-  if(pinEntry===MASTER_PIN){
-    loginSuccess(loginAgent,true);
-    return;
-  }
+  if(pinEntry===MASTER_PIN){loginSuccess(loginAgent,true);return;}
   if(settingPin){
-    // First time — setting pin, confirm step
     if(tempPin===''){
-      tempPin=pinEntry;
-      pinEntry='';
-      updatePinDots();
+      tempPin=pinEntry;pinEntry='';updatePinDots();
       document.getElementById('pin-prompt').textContent='Confirm your pin.';
-      msg.textContent='';
-      return;
+      msg.textContent='';return;
     } else {
       if(pinEntry===tempPin){
-        localStorage.setItem('sl-pin-'+loginAgent,pinEntry);
+        await savePin(loginAgent,pinEntry);
         loginSuccess(loginAgent,false);
       } else {
-        pinEntry='';tempPin='';
-        updatePinDots();
+        pinEntry='';tempPin='';updatePinDots();
         showPinError('Pins didn\'t match. Try again.');
         document.getElementById('pin-prompt').textContent='Create your 4-digit pin.';
       }
       return;
     }
   }
-  // Returning agent — check stored pin
-  const stored=localStorage.getItem('sl-pin-'+loginAgent);
-  if(pinEntry===stored){
-    loginSuccess(loginAgent,false);
-  } else {
-    pinEntry='';
-    updatePinDots();
-    showPinError('Wrong pin. Try again.');
-  }
+  const stored=await getPin(loginAgent);
+  if(pinEntry===stored){loginSuccess(loginAgent,false);}
+  else{pinEntry='';updatePinDots();showPinError('Wrong pin. Try again.');}
 }
 
 function showPinError(msg){
@@ -1538,28 +1526,24 @@ function showPinError(msg){
   },600);
 }
 
-function loginSuccess(name,isMaster){
+async function loginSuccess(name,isMaster){
   document.getElementById('login-page').classList.add('hidden');
   document.getElementById('main-app').style.display='flex';
-  // If master pin — go to broker dashboard
   if(isMaster){
+    await loadAllAgents();
     switchView('broker',document.querySelector('.nav-item'));
     return;
   }
-  // Otherwise go straight to their agent tab
   const idx=agents.findIndex(a=>a.name===name);
   if(idx>=0){
+    await loadAgentData(idx);
+    renderBroker();
     switchView('agent',null);
     selectAgent(idx);
-    // Hide other agents' tabs in sidebar for non-master
     document.querySelectorAll('.nav-item').forEach(btn=>{
       const txt=btn.textContent.trim();
-      // Hide other agent nav items
-      if(txt.includes('👤')&&!txt.includes(name)){
-        btn.style.display='none';
-      }
+      if(txt.includes('👤')&&!txt.includes(name)){btn.style.display='none';}
     });
-    // Hide broker dashboard from regular agents
     document.querySelectorAll('.nav-item').forEach(btn=>{
       if(btn.textContent.includes('Team dashboard'))btn.style.display='none';
     });
@@ -1580,6 +1564,102 @@ if(localStorage.getItem('sl-theme')==='light'){
   const el=document.getElementById('theme-label');
   if(el)el.textContent='☀️ Light mode';
 }
+
+// ── SUPABASE ─────────────────────────────────────────────────────
+const SUPABASE_URL='https://kctyueybsgkmorfcmodm.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjdHl1ZXlic2drbW9yZmNtb2RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5OTM5MzgsImV4cCI6MjA5NTU2OTkzOH0.iIsnXSc1AvNMxHd9138gv8u49dP8oNG5miNUEIhWbOs';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+function todayStr(){
+  return new Date().toISOString().split('T')[0];
+}
+
+async function saveAgentData(idx){
+  const a=agents[idx];
+  const s=state[idx];
+  const today=todayStr();
+  const row={
+    agent_name:a.name,
+    date:today,
+    calls:s.calls||0,
+    convos:s.convos||0,
+    followups:s.followups||0,
+    refs:s.refs||0,
+    appts:s.appts||0,
+    story:s.story||false,
+    submitted:s.submitted||false,
+    doors_knocked:s.doorsKnocked||0,
+    open_house_signins:s.openHouseSignIns||0,
+    active_listings:s.activeListings||0,
+    active_buyers:s.activeBuyers||0,
+    pending_volume:s.pendingVolume||0,
+    leads:s.leads||0,
+    appt_held:s.apptHeld||0,
+    contracts:s.contracts||0,
+    closings:s.closings||0,
+  };
+  await sb.from('daily_activity').upsert(row,{onConflict:'agent_name,date'});
+}
+
+async function loadAgentData(idx){
+  const a=agents[idx];
+  const today=todayStr();
+  const{data}=await sb.from('daily_activity').select('*').eq('agent_name',a.name).eq('date',today).single();
+  if(data){
+    state[idx].calls=data.calls||0;
+    state[idx].convos=data.convos||0;
+    state[idx].followups=data.followups||0;
+    state[idx].refs=data.refs||0;
+    state[idx].appts=data.appts||0;
+    state[idx].story=data.story||false;
+    state[idx].submitted=data.submitted||false;
+    state[idx].doorsKnocked=data.doors_knocked||0;
+    state[idx].openHouseSignIns=data.open_house_signins||0;
+    state[idx].activeListings=data.active_listings||0;
+    state[idx].activeBuyers=data.active_buyers||0;
+    state[idx].pendingVolume=data.pending_volume||0;
+    state[idx].leads=data.leads||0;
+    state[idx].apptHeld=data.appt_held||0;
+    state[idx].contracts=data.contracts||0;
+    state[idx].closings=data.closings||0;
+  }
+}
+
+async function loadAllAgents(){
+  for(let i=0;i<agents.length;i++){
+    await loadAgentData(i);
+  }
+  renderBroker();
+  renderSpotlight();
+}
+
+async function savePin(agentName,pin){
+  await sb.from('agent_pins').upsert({agent_name:agentName,pin:pin},{onConflict:'agent_name'});
+}
+
+async function getPin(agentName){
+  const{data}=await sb.from('agent_pins').select('pin').eq('agent_name',agentName).single();
+  return data?data.pin:null;
+}
+
+async function saveBooksToDb(){
+  // Save books as JSON in a single row
+  await sb.from('books').upsert({id:1,title:JSON.stringify(books),agent_name:'all',date:todayStr()});
+}
+
+async function loadBooksFromDb(){
+  const{data}=await sb.from('books').select('*').eq('agent_name','all').single();
+  if(data&&data.title){
+    try{
+      const parsed=JSON.parse(data.title);
+      if(Array.isArray(parsed)){books.splice(0,books.length,...parsed);}
+    }catch(e){}
+  }
+}
+
+// Load all data on startup
+loadAllAgents();
+loadBooksFromDb();
 </script>
 </body>
 </html>
