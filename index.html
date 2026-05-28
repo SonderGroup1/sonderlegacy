@@ -1330,7 +1330,7 @@ Write ONLY the text message. No quotes around it, no explanation, no preamble.`;
     const smsLink='sms:?body='+encodeURIComponent(generatedText);
     const qrImg=document.getElementById('qr-img');
     if(qrImg){
-      qrImg.src='https://chart.googleapis.com/chart?cht=qr&chs=100x100&chl='+encodeURIComponent(smsLink)+'&choe=UTF-8';
+      qrImg.src='https://qrImg.src='https://api.qrserver.com/v1/create-qr-code/?size=100x100&data='+encodeURIComponent(smsLink);.com/chart?cht=qr&chs=100x100&chl='+encodeURIComponent(smsLink)+'&choe=UTF-8';
     }
   }catch(e){
     txt.textContent='Something went wrong. Please try again.';
