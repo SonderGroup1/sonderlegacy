@@ -28,7 +28,7 @@ exports.handler = async function(event, context) {
 
     // Build per-agent stats
     const agentStats = AGENTS.map(name => {
-      const rows = (weekData || []).filter(r => r.agent_name === name);
+      const rows = Array.isArray(weekData) ? weekData.filter(r => r.agent_name === name) : [];
       if (rows.length === 0) return { name, noData: true };
 
       const avg = key => rows.length > 0 ? Math.round(rows.reduce((s, r) => s + (r[key] || 0), 0) / rows.length) : 0;
