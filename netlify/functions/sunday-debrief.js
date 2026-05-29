@@ -4,7 +4,7 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const RESEND_KEY = process.env.RESEND_API_KEY;
 
 const RECIPIENTS = ['kevin@sondergrouputah.com'];
-const FROM_EMAIL = 'debrief@sonderlegacy.org';
+const FROM_EMAIL = 'onboarding@resend.dev';
 const AGENTS = ['Kevin', 'Steven', 'Chris', 'Logan', 'Pepper'];
 const MINS = { calls: 20, convos: 5, followups: 5, refs: 5 };
 
