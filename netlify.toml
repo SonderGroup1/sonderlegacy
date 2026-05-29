@@ -1,2 +1,6 @@
 [build]
   functions = "netlify/functions"
+
+[[scheduled-functions]]
+  name = "sunday-debrief"
+  cron = "0 23 * * 0"
