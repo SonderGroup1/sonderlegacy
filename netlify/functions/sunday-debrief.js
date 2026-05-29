@@ -3,8 +3,8 @@ const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const RESEND_KEY = process.env.RESEND_API_KEY;
 
-const RECIPIENTS = ['kevin@sondergrouputah.com', 'steven@sondergrouputah.com'];
-const FROM_EMAIL = 'Sonder Legacy <onboarding@resend.dev>';
+const RECIPIENTS = ['kevin@sondergrouputah.com'];
+const FROM_EMAIL = 'debrief@sonderlegacy.org';
 const AGENTS = ['Kevin', 'Steven', 'Chris', 'Logan', 'Pepper'];
 const MINS = { calls: 20, convos: 5, followups: 5, refs: 5 };
 
