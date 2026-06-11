@@ -4,7 +4,7 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 const RESEND_KEY = process.env.RESEND_API_KEY;
 
 const RECIPIENTS = ['kevin@sondergrouputah.com'];
-const FROM_EMAIL = 'onboarding@resend.dev';
+const FROM_EMAIL = 'debrief@sonderlegacy.org';
 const AGENTS = ['Kevin', 'Steven', 'Chris', 'Logan', 'Pepper'];
 const MINS = { calls: 20, convos: 5, followups: 5, refs: 5 };
 
@@ -147,7 +147,7 @@ Keep each agent section to 4-6 sentences. Be specific with numbers. Don't sugarc
 <body style="font-family:Georgia,serif;background:#f4f5f9;margin:0;padding:20px">
   <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)">
     <div style="background:#0f2557;padding:28px 32px;text-align:center">
-      <div style="font-size:28px;margin-bottom:8px">🏡</div>
+      <div style="font-size:28px;margin-bottom:8px"><img src="https://raw.githubusercontent.com/SonderGroup1/sonderlegacy/main/Sonder_Group_Logo.jpeg" alt="Sonder" style="width:60px;height:60px;object-fit:contain;border-radius:8px;background:#fff;padding:4px"></div>
       <div style="font-family:Georgia,serif;font-size:22px;color:#fff;margin-bottom:4px">Sonder Legacy</div>
       <div style="font-size:12px;color:#c9a84c;text-transform:uppercase;letter-spacing:.1em">Weekly Performance Debrief</div>
       <div style="font-size:13px;color:rgba(255,255,255,.6);margin-top:8px">${weekRange}</div>
