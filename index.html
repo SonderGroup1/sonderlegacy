@@ -748,6 +748,8 @@ const state=agents.map(()=>({
   leads:0,apptHeld:0,contracts:0,
   // Extra activities
   doorsKnocked:0,openHouseSignIns:0,reviewsRequested:0,
+  // New daily checkboxes
+  sentHomes:false,showedHomes:false,updatedUnderContract:false,updatedListings:false,
 }));
 let currentAgent=0;
 const gen={agent:null,event:null,vibe:null};
@@ -889,6 +891,27 @@ function renderAgentView(idx){
           <div class="check-row"><span class="cl">${c.l}</span><span class="${state[idx][c.k]>=c.m?'cm':'cx'}">${state[idx][c.k]>=c.m?'✓ Met':'✗ '+state[idx][c.k]+' / '+c.m}</span></div>`).join('')}
           <div class="check-row"><span class="cl">Story posted</span><span class="${s.story?'cm':'cx'}">${s.story?'✓ Done':'✗ Not yet'}</span></div>
         </div>
+        <div style="margin-top:14px;margin-bottom:4px">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Did you do this today?</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;background:${s.sentHomes?'var(--teal-bg)':'var(--surface2)'};border:1px solid ${s.sentHomes?'var(--teal-dim)':'var(--border)'};border-radius:10px;padding:12px;cursor:pointer" onclick="toggleCheck(${idx},'sentHomes')">
+              <div style="font-size:20px">${s.sentHomes?'✅':'🏠'}</div>
+              <div><div style="font-size:13px;font-weight:500;color:var(--text)">Send homes</div><div style="font-size:11px;color:var(--muted)">Sent listings to buyers</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:${s.showedHomes?'var(--teal-bg)':'var(--surface2)'};border:1px solid ${s.showedHomes?'var(--teal-dim)':'var(--border)'};border-radius:10px;padding:12px;cursor:pointer" onclick="toggleCheck(${idx},'showedHomes')">
+              <div style="font-size:20px">${s.showedHomes?'✅':'🔑'}</div>
+              <div><div style="font-size:13px;font-weight:500;color:var(--text)">Show homes</div><div style="font-size:11px;color:var(--muted)">Conducted showings</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:${s.updatedUnderContract?'var(--teal-bg)':'var(--surface2)'};border:1px solid ${s.updatedUnderContract?'var(--teal-dim)':'var(--border)'};border-radius:10px;padding:12px;cursor:pointer" onclick="toggleCheck(${idx},'updatedUnderContract')">
+              <div style="font-size:20px">${s.updatedUnderContract?'✅':'📋'}</div>
+              <div><div style="font-size:13px;font-weight:500;color:var(--text)">Under contract update</div><div style="font-size:11px;color:var(--muted)">Checked in on contracts</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:${s.updatedListings?'var(--teal-bg)':'var(--surface2)'};border:1px solid ${s.updatedListings?'var(--teal-dim)':'var(--border)'};border-radius:10px;padding:12px;cursor:pointer" onclick="toggleCheck(${idx},'updatedListings')">
+              <div style="font-size:20px">${s.updatedListings?'✅':'📊'}</div>
+              <div><div style="font-size:13px;font-weight:500;color:var(--text)">Listings update</div><div style="font-size:11px;color:var(--muted)">Checked in on listings</div></div>
+            </div>
+          </div>
+        </div>
         <button class="submit-btn${s.submitted?' done':''}" onclick="submitDay(${idx})" ${s.submitted?'disabled':''}>${s.submitted?'✓ Day submitted — great work!':'Submit my day'}</button>
       </div>
       <div class="card">
@@ -1026,6 +1049,7 @@ function renderSocial(){
     </div>`).join('');
 }
 
+function toggleCheck(idx,key){state[idx][key]=!state[idx][key];renderAgentView(idx);renderBroker();updateDots();saveAgentData(idx);}
 function toggleStory(idx){state[idx].story=!state[idx].story;renderBroker();renderSocial();if(currentAgent===idx)renderAgentView(idx);updateDots();saveAgentData(idx);}
 function toggleWeekPost(idx){state[idx].weekPost=!state[idx].weekPost;renderSocial();}
 function upd(idx,key,val){state[idx][key]=Math.max(0,val||0);renderBroker();renderAgentView(idx);updateDots();saveAgentData(idx);}
@@ -1597,6 +1621,10 @@ async function saveAgentData(idx){
     appt_held:s.apptHeld||0,
     contracts:s.contracts||0,
     closings:s.closings||0,
+    sent_homes:s.sentHomes||false,
+    showed_homes:s.showedHomes||false,
+    updated_under_contract:s.updatedUnderContract||false,
+    updated_listings:s.updatedListings||false,
   };
   await sb.from('daily_activity').upsert(row,{onConflict:'agent_name,date'});
 }
@@ -1622,6 +1650,10 @@ async function loadAgentData(idx){
     state[idx].apptHeld=data.appt_held||0;
     state[idx].contracts=data.contracts||0;
     state[idx].closings=data.closings||0;
+    state[idx].sentHomes=data.sent_homes||false;
+    state[idx].showedHomes=data.showed_homes||false;
+    state[idx].updatedUnderContract=data.updated_under_contract||false;
+    state[idx].updatedListings=data.updated_listings||false;
   }
 }
 
