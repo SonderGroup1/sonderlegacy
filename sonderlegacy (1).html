@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sonder Legacy CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* DARK THEME (default) */
+:root{
+  --bg:#09090f;--surface:#10101a;--surface2:#17172a;--border:#1e1e35;--border2:#28283f;
+  --text:#f0f0f8;--muted:#7878a0;--hint:#44445a;
+  --navy:#0f2557;--navy-light:#1a3a8f;--navy-dim:rgba(15,37,87,.6);
+  --gold:#c9a84c;--gold-dim:rgba(201,168,76,.2);--gold-bg:rgba(201,168,76,.08);
+  --accent:#1a3a8f;--accent-dim:rgba(26,58,143,.3);--accent-bg:rgba(26,58,143,.12);
+  --teal:#2dd4a0;--teal-bg:#0d2b24;--teal-dim:rgba(45,212,160,.2);
+  --amber:#f5a623;--amber-bg:#2a1f0a;--amber-dim:rgba(245,166,35,.2);
+  --coral:#f06a50;--coral-bg:#2a1209;--coral-dim:rgba(240,106,80,.2);
+  --blue:#5ba3f5;--blue-bg:#0d1e33;--blue-dim:rgba(91,163,245,.2);
+  --red:#f56565;--red-bg:#2a0d0d;--red-dim:rgba(245,101,101,.2);
+  --purple:#7c6ff7;--purple-dim:#4a45a0;--purple-bg:#1e1c3a;
+}
+
+/* LIGHT THEME */
+body.light{
+  --bg:#f4f5f9;--surface:#ffffff;--surface2:#f0f1f7;--border:#e0e2ef;--border2:#cacde0;
+  --text:#0d0d1a;--muted:#6060808;--hint:#9090b0;
+  --navy:#0f2557;--navy-light:#1a3a8f;--navy-dim:rgba(15,37,87,.1);
+  --gold:#b8922a;--gold-dim:rgba(184,146,42,.2);--gold-bg:rgba(184,146,42,.07);
+  --accent:#1a3a8f;--accent-dim:rgba(26,58,143,.15);--accent-bg:rgba(26,58,143,.07);
+  --teal:#0f8f6a;--teal-bg:#e6f7f2;--teal-dim:rgba(15,143,106,.2);
+  --amber:#b57d10;--amber-bg:#fef3dc;--amber-dim:rgba(181,125,16,.2);
+  --coral:#c94f35;--coral-bg:#fdeee9;--coral-dim:rgba(201,79,53,.2);
+  --blue:#1a5cbf;--blue-bg:#e8f0fc;--blue-dim:rgba(26,92,191,.2);
+  --red:#b83232;--red-bg:#fdeaea;--red-dim:rgba(184,50,50,.2);
+  --purple:#4a40c0;--purple-dim:rgba(74,64,192,.3);--purple-bg:rgba(74,64,192,.08);
+}
+
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;transition:background .2s,color .2s}
+
+/* Theme toggle */
+.theme-toggle{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:12px;color:var(--muted);font-family:'DM Sans',sans-serif;transition:all .15s;width:calc(100% - 24px)}
+.theme-toggle:hover{color:var(--text)}
+.toggle-track{width:28px;height:16px;border-radius:99px;background:var(--border2);position:relative;transition:background .2s;flex-shrink:0;margin-left:auto}
+.toggle-thumb{width:12px;height:12px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s}
+body.light .toggle-track{background:var(--navy)}
+body.light .toggle-thumb{transform:translateX(12px)}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:var(--navy);border-right:1px solid rgba(255,255,255,.08);padding:24px 0;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.main{flex:1;padding:32px;overflow-y:auto}
+.brand{padding:0 20px 24px;border-bottom:1px solid rgba(255,255,255,.1)}
+.brand-logo{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.brand-img{width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
+.brand-img img{width:100%;height:100%;object-fit:contain}
+.brand-wordmark{font-family:'DM Serif Display',serif;font-size:17px;color:#fff;letter-spacing:0.01em;line-height:1.2}
+.brand-tagline{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;margin-top:2px}
+.brand-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:6px}
+.nav{padding:12px 12px;flex:1}
+.nav-section{font-size:10px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;padding:0 8px;margin:16px 0 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.55);transition:all .15s;border:1px solid transparent;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.15)}
+.nav-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-left:auto;transition:background .3s}
+.sidebar-footer{padding:12px;border-top:1px solid rgba(255,255,255,.1)}
+.view{display:none}.view.active{display:block}
+.page-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);margin-bottom:4px}
+.page-sub{font-size:14px;color:var(--muted);margin-bottom:28px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.stat-card.hi{border-color:var(--gold-dim);background:var(--gold-bg)}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.stat-value{font-size:26px;font-weight:500;color:var(--text);font-family:'DM Serif Display',serif}
+.stat-card.hi .stat-value{color:var(--gold)}
+.stat-sub{font-size:11px;color:var(--hint);margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:500;color:var(--text)}
+.card-sub{font-size:12px;color:var(--muted)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.atable{width:100%;border-collapse:collapse}
+.atable th{font-size:10px;color:var(--hint);text-align:left;padding:0 10px 10px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+.atable th.c{text-align:center}
+.atable td{padding:13px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.atable tr:last-child td{border-bottom:none}
+.atable tr:hover td{background:var(--surface2)}
+.ac{display:flex;align-items:center;gap:10px}
+.av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;border:1px solid var(--border2)}
+.an{font-size:13px;font-weight:500;color:var(--text)}
+.ar{font-size:11px;color:var(--muted)}
+.nc{text-align:center}
+.nv{font-size:14px;font-weight:500}
+.nt{font-size:10px;color:var(--hint);margin-top:1px}
+.bw{height:3px;background:var(--border);border-radius:99px;overflow:hidden;margin:3px auto 0;width:36px}
+.bf{height:100%;border-radius:99px}
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px}
+.b-fire{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-dim)}
+.b-track{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-dim)}
+.b-push{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-dim)}
+.b-behind{background:var(--red-bg);color:var(--red);border:1px solid var(--red-dim)}
+.agent-selector{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.agent-pill{padding:7px 16px;border-radius:99px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);transition:all .15s;display:flex;align-items:center;gap:8px}
+.agent-pill:hover{border-color:var(--border2);color:var(--text)}
+.agent-pill.active{background:var(--purple-bg);border-color:var(--purple-dim);color:var(--purple)}
+.pip{width:8px;height:8px;border-radius:50%}
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+.tc{text-align:center}
+.tl{font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.ti{width:100%;height:44px;font-size:18px;font-weight:500;text-align:center;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;transition:border-color .15s}
+.ti:focus{outline:none;border-color:var(--navy-light)}
+.ti.met{border-color:var(--teal);color:var(--teal)}
+.ti.miss{border-color:var(--red)}
+.check-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.check-row:last-child{border-bottom:none}
+.cl{font-size:13px;color:var(--muted)}.cm{font-size:12px;color:var(--teal);font-weight:500}.cx{font-size:12px;color:var(--red);font-weight:500}
+.prog-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.pl{font-size:13px;color:var(--text);min-width:150px}
+.pw{flex:1;height:5px;background:var(--border);border-radius:99px;overflow:hidden}
+.pf{height:100%;border-radius:99px}
+.pp{font-size:12px;color:var(--muted);min-width:44px;text-align:right}
+.submit-btn{width:100%;padding:12px;border-radius:10px;border:1px solid var(--navy-light);background:var(--accent-bg);color:var(--navy-light);font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:12px}
+.submit-btn:hover{background:var(--navy);color:#fff}
+.submit-btn.done{background:var(--teal-bg);border-color:var(--teal-dim);color:var(--teal);cursor:default}
+body.light .submit-btn{color:var(--navy);border-color:var(--navy)}
+.social-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.social-row:last-child{border-bottom:none}
+.social-info{display:flex;align-items:center;gap:10px}
+.social-label{font-size:14px;font-weight:500;color:var(--text)}
+.social-sub{font-size:12px;color:var(--muted)}
+.scheck{width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .15s}
+.scheck.done{background:var(--teal-bg);border-color:var(--teal)}
+.post-gen{background:var(--surface2);border:1px solid var(--accent-dim);border-radius:14px;padding:22px;margin-bottom:16px}
+.pgh{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.pgi{width:42px;height:42px;border-radius:10px;background:var(--navy);border:1px solid var(--navy-light);display:flex;align-items:center;justify-content:center;font-size:22px}
+.pgt{font-size:16px;font-weight:500;color:var(--text)}
+.pgs{font-size:12px;color:var(--muted);margin-top:2px}
+.gq{margin-bottom:16px}
+.gl{font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+.gopts{display:flex;gap:8px;flex-wrap:wrap}
+.gopt{padding:7px 14px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:var(--muted);font-size:13px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.gopt:hover{border-color:var(--navy-light);color:var(--text)}
+.gopt.sel{background:var(--navy);border-color:var(--navy-light);color:#fff;font-weight:500}
+.gen-btn{width:100%;padding:13px;border-radius:10px;border:none;background:var(--navy);color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:4px}
+.gen-btn:hover{background:var(--navy-light)}
+.gen-btn:disabled{opacity:.4;cursor:default}
+.post-out{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-top:16px;display:none}
+.post-out.show{display:block}
+.post-out-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.post-txt{font-size:14px;color:var(--text);line-height:1.8;white-space:pre-wrap}
+.copy-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:#fff;background:var(--navy);border:1px solid var(--navy-light);border-radius:8px;padding:8px 14px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:14px;transition:all .15s}
+.copy-btn:hover{background:var(--navy-light)}
+.ldots{display:inline-flex;gap:4px;align-items:center}
+.ldots span{width:6px;height:6px;border-radius:50%;background:#fff;animation:dot .8s infinite}
+.ldots span:nth-child(2){animation-delay:.15s}
+.ldots span:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.min-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.min-card{background:var(--navy);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;text-align:center}
+.min-val{font-size:28px;font-weight:300;color:var(--gold);font-family:'DM Serif Display',serif}
+.min-lbl{font-size:11px;color:rgba(255,255,255,.5);margin-top:4px}
+.mr{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.mr:last-child{border-bottom:none}
+.ml{color:var(--muted)}.mv{color:var(--text);font-weight:500}.ma{color:var(--purple)}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.mc.cur{border-color:var(--purple-dim);background:var(--purple-bg)}
+.mn{width:24px;height:24px;border-radius:50%;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.mt{font-size:14px;font-weight:500;color:var(--text);margin-bottom:10px}
+.mk{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.mkl{color:var(--muted)}.mkv{color:var(--text);font-weight:500}
+.mf{font-size:11px;color:var(--hint);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.gr{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.gn{font-size:13px;color:var(--text);min-width:120px;display:flex;align-items:center;gap:8px}
+.gav{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600}
+.gbw{flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden}
+.gbf{height:100%;border-radius:99px}
+.gv{font-size:12px;color:var(--muted);min-width:72px;text-align:right}
+.qsend-btn{padding:9px 18px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.qsend-btn:hover{border-color:var(--purple-dim);color:var(--text)}
+.qsend-btn.sel{background:var(--purple-bg);border-color:var(--purple-dim);color:var(--purple);font-weight:500}
+.q-item{padding:14px 0;border-bottom:1px solid var(--border)}
+.q-item:last-child{border-bottom:none}
+.q-num{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.q-text{font-size:15px;color:var(--text);font-weight:500;margin-bottom:8px}
+.q-opts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.q-opt{padding:5px 14px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.q-opt:hover{border-color:var(--purple-dim);color:var(--text)}
+.q-opt.sel{background:var(--purple-bg);border-color:var(--purple-dim);color:var(--purple);font-weight:500}
+.q-input{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;margin-top:4px}
+.q-input:focus{outline:none;border-color:var(--purple)}
+.send-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px}
+.send-box-title{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.send-text{font-size:13px;color:var(--text);line-height:1.8;white-space:pre-wrap}
+.copy-q-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:#fff;background:var(--navy);border:1px solid var(--navy-light);border-radius:8px;padding:8px 14px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:12px;transition:all .15s}
+.copy-q-btn:hover{background:var(--navy-light)}
+.print-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--teal);background:var(--teal-bg);border:1px solid var(--teal-dim);border-radius:8px;padding:8px 14px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:12px;transition:all .15s}
+.print-btn:hover{background:var(--teal);color:#fff}
+/* Quote bar */
+.quote-bar{background:var(--navy);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 20px 14px 44px;margin-bottom:20px;font-size:14px;color:rgba(255,255,255,.85);font-style:italic;text-align:center;position:relative}
+.quote-bar::before{content:'\201C';font-family:'DM Serif Display',serif;font-size:36px;color:var(--gold);opacity:.7;position:absolute;left:14px;top:6px;line-height:1}
+body.light .quote-bar{color:#fff}
+/* Spotlight */
+.spotlight-wrap{display:grid;grid-template-columns:320px 1fr;gap:16px;margin-bottom:20px;align-items:start}
+.spotlight-card{border-radius:16px;overflow:hidden;position:relative;background:var(--navy);border:1px solid rgba(201,168,76,.35);min-height:260px}
+.spotlight-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,.2) 0%,transparent 65%);pointer-events:none}
+.spotlight-inner{position:relative;z-index:1;padding:24px 20px;text-align:center}
+.spotlight-emoji{font-size:60px;line-height:1;margin-bottom:8px;display:inline-block;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.spotlight-crown{font-size:10px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.14em;margin-bottom:4px}
+.spotlight-name{font-family:'DM Serif Display',serif;font-size:26px;color:#fff;margin-bottom:14px}
+.spotlight-tabs{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
+.sptab{padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.5);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.sptab:hover{color:#fff;border-color:rgba(255,255,255,.4)}
+.sptab.active{background:var(--gold);border-color:var(--gold);color:#000;font-weight:600}
+.spotlight-stat{font-size:22px;font-weight:500;color:var(--gold);margin-bottom:3px}
+.spotlight-sub{font-size:11px;color:rgba(255,255,255,.35)}
+/* Rank list */
+.rank-list{display:flex;flex-direction:column;gap:8px}
+.rank-item{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;transition:all .2s}
+.rank-item.rank-1{border-color:rgba(201,168,76,.45);background:var(--gold-bg)}
+.rank-pos{font-family:'DM Serif Display',serif;font-size:20px;color:var(--muted);min-width:26px;text-align:center}
+.rank-pos.gold{color:var(--gold)}
+.rank-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;border:1px solid var(--border2)}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-size:14px;font-weight:500;color:var(--text)}
+.rank-detail{font-size:11px;color:var(--muted);margin-top:2px}
+.rank-bar-wrap{height:3px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:5px}
+.rank-bar{height:100%;border-radius:99px;transition:width .6s ease}
+.rank-val{font-size:14px;font-weight:500;color:var(--text);text-align:right;white-space:nowrap}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--surface)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+/* LOGIN PAGE */
+.login-page{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column}
+.login-page.hidden{display:none}
+.login-brand{text-align:center;margin-bottom:40px}
+.login-icon{width:72px;height:72px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 16px}
+.login-title{font-family:'DM Serif Display',serif;font-size:32px;color:#fff;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--gold);text-transform:uppercase;letter-spacing:.12em}
+.login-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:32px;width:100%;max-width:360px}
+.login-label{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.agent-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.agent-btn{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;text-align:center}
+.agent-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+.agent-btn.sel{background:rgba(255,255,255,.18);border-color:var(--gold);color:#fff}
+.pin-row{display:flex;gap:10px;justify-content:center;margin:16px 0}
+.pin-dot{width:48px;height:56px;border-radius:10px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;transition:all .2s}
+.pin-dot.filled{border-color:var(--gold);background:rgba(201,168,76,.15)}
+.pin-dot.error{border-color:var(--red);background:rgba(245,101,101,.1);animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.num-btn{padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:#fff;font-size:18px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;text-align:center}
+.num-btn:hover{background:rgba(255,255,255,.14)}
+.num-btn:active{background:rgba(255,255,255,.2);transform:scale(.96)}
+.num-btn.del{font-size:14px;color:rgba(255,255,255,.5)}
+.login-msg{font-size:13px;text-align:center;margin-top:12px;min-height:20px;color:var(--red)}
+.set-pin-prompt{font-size:13px;color:rgba(255,255,255,.6);text-align:center;margin-bottom:12px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div class="login-page" id="login-page">
+  <div class="login-brand">
+    <div class="login-icon">🏡</div>
+    <div class="login-title">Sonder Legacy</div>
+    <div class="login-sub">Sonder Group</div>
+  </div>
+  <div class="login-card">
+    <div id="login-step-select">
+      <div class="login-label">Who are you?</div>
+      <div class="agent-btns" id="agent-btns"></div>
+      <div id="pin-section" style="display:none">
+        <div class="set-pin-prompt" id="pin-prompt"></div>
+        <div class="pin-row" id="pin-dots">
+          <div class="pin-dot" id="pd0"></div>
+          <div class="pin-dot" id="pd1"></div>
+          <div class="pin-dot" id="pd2"></div>
+          <div class="pin-dot" id="pd3"></div>
+        </div>
+        <div class="numpad">
+          <button class="num-btn" onclick="numPress('1')">1</button>
+          <button class="num-btn" onclick="numPress('2')">2</button>
+          <button class="num-btn" onclick="numPress('3')">3</button>
+          <button class="num-btn" onclick="numPress('4')">4</button>
+          <button class="num-btn" onclick="numPress('5')">5</button>
+          <button class="num-btn" onclick="numPress('6')">6</button>
+          <button class="num-btn" onclick="numPress('7')">7</button>
+          <button class="num-btn" onclick="numPress('8')">8</button>
+          <button class="num-btn" onclick="numPress('9')">9</button>
+          <button class="num-btn" style="visibility:hidden"></button>
+          <button class="num-btn" onclick="numPress('0')">0</button>
+          <button class="num-btn del" onclick="numPress('⌫')">⌫</button>
+        </div>
+        <div class="login-msg" id="login-msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="main-app" style="display:none">
+  <div class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">
+        <div class="brand-img" id="brand-img-wrap">
+          <!-- Replace src below with your real logo URL when ready -->
+          <span style="font-size:20px">🏡</span>
+        </div>
+        <div>
+          <div class="brand-wordmark">Sonder Legacy</div>
+          <div class="brand-tagline">Sonder Group</div>
+        </div>
+      </div>
+      <div class="brand-sub">Team CRM · 5 agents</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Overview</div>
+      <button class="nav-item active" onclick="switchView('broker',this)">📊 Team dashboard</button>
+      <div class="nav-section">Agents</div>
+      <button class="nav-item" onclick="switchView('agent',this);selectAgent(0)">👤 Kevin <span class="nav-dot" id="dot-0" style="background:#c9a84c"></span></button>
+      <button class="nav-item" onclick="switchView('agent',this);selectAgent(1)">👤 Steven <span class="nav-dot" id="dot-1" style="background:#2dd4a0"></span></button>
+      <button class="nav-item" onclick="switchView('agent',this);selectAgent(2)">👤 Chris <span class="nav-dot" id="dot-2" style="background:#5ba3f5"></span></button>
+      <button class="nav-item" onclick="switchView('agent',this);selectAgent(3)">👤 Logan <span class="nav-dot" id="dot-3" style="background:#f5a623"></span></button>
+      <button class="nav-item" onclick="switchView('agent',this);selectAgent(4)">👤 Pepper <span class="nav-dot" id="dot-4" style="background:#f06a50"></span></button>
+      <div class="nav-section">Content</div>
+      <button class="nav-item" onclick="switchView('social',this)">✨ Post generator</button>
+      <button class="nav-item" onclick="switchView('textgen',this)">💬 Text generator</button>
+      <button class="nav-item" onclick="switchView('buyer',this)">🏠 Buyer questionnaire</button>
+      <button class="nav-item" onclick="switchView('seller',this)">📋 Seller questionnaire</button>
+      <div class="nav-section">Plan</div>
+      <button class="nav-item" onclick="switchView('goals',this)">🎯 90-day goals</button>
+      <button class="nav-item" onclick="switchView('reviews',this)">⭐ Reviews</button>
+      <button class="nav-item" onclick="switchView('books',this)">📚 Books</button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <span id="theme-label">🌙 Dark mode</span>
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      </button>
+      <div style="font-size:11px;color:rgba(255,255,255,.3);padding:8px 8px 0">Today</div>
+      <div style="font-size:13px;font-weight:500;color:rgba(255,255,255,.7);padding:2px 8px 0" id="sidebar-date"></div>
+    </div>
+  </div>
+
+  <main class="main">
+
+    <!-- HOME / LEADERBOARD -->
+    <div id="view-broker" class="view active">
+
+      <!-- Daily quote -->
+      <div class="quote-bar" id="quote-bar"></div>
+
+      <!-- What we're reading (shows when books added) -->
+      <div id="home-books" style="display:none"></div>
+
+      <!-- Money bag spotlight -->
+      <div class="spotlight-wrap">
+        <div class="spotlight-card" id="spotlight-card">
+          <div class="spotlight-bg"></div>
+          <div class="spotlight-inner">
+            <div class="spotlight-emoji" id="spotlight-emoji">💰</div>
+            <div class="spotlight-crown">👑 #1 Agent</div>
+            <div class="spotlight-name" id="spotlight-name">—</div>
+            <div class="spotlight-tabs" id="spotlight-tabs">
+              <button class="sptab active" onclick="setSpotlightMode('activity',this)">Activity</button>
+              <button class="sptab" onclick="setSpotlightMode('closings',this)">Closings</button>
+              <button class="sptab" onclick="setSpotlightMode('appts',this)">Appointments</button>
+            </div>
+            <div class="spotlight-stat" id="spotlight-stat">—</div>
+            <div class="spotlight-sub" id="spotlight-sub">Daily activity leaderboard</div>
+          </div>
+        </div>
+
+        <!-- Full ranked list -->
+        <div class="rank-list" id="rank-list"></div>
+      </div>
+
+      <!-- Team snapshot -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div class="stat-card"><div class="stat-label">Team calls today</div><div class="stat-value" id="t-calls">0</div><div class="stat-sub">goal: 100</div></div>
+        <div class="stat-card"><div class="stat-label">Conversations</div><div class="stat-value" id="t-convos">0</div><div class="stat-sub">goal: 25</div></div>
+        <div class="stat-card"><div class="stat-label">Referrals asked</div><div class="stat-value" id="t-refs">0</div><div class="stat-sub">goal: 25</div></div>
+        <div class="stat-card hi"><div class="stat-label">Submitted today</div><div class="stat-value" id="t-sub">0/5</div><div class="stat-sub">end-of-day reports</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Daily activity — all agents</span><span class="card-sub" id="broker-date"></span></div>
+        <table class="atable">
+          <thead><tr>
+            <th>Agent</th>
+            <th class="c">Calls<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">min 20</span></th>
+            <th class="c">Convos<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">min 5</span></th>
+            <th class="c">Follow-ups<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">min 5</span></th>
+            <th class="c">Referrals<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">min 5</span></th>
+            <th class="c">Story<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">1/day</span></th>
+            <th class="c">Status</th>
+          </tr></thead>
+          <tbody id="broker-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Appointments & closings</span><span class="card-sub">90-day progress per agent</span></div>
+        <div id="gci-bars"></div>
+      </div>
+    </div>
+
+    <!-- AGENT -->
+    <div id="view-agent" class="view">
+      <div class="page-title">Agent view</div>
+      <div class="page-sub">Log your daily activity and track your 90-day goals</div>
+      <div class="agent-selector" id="agent-selector"></div>
+      <div id="agent-content"></div>
+    </div>
+
+    <!-- TEXT GENERATOR -->
+    <div id="view-textgen" class="view">
+      <div class="page-title">Text generator</div>
+      <div class="page-sub">Don't know what to say? Answer a few questions — get a natural text ready to send in seconds.</div>
+
+      <div style="background:var(--navy);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:rgba(255,255,255,.75);line-height:1.7">
+        💡 <strong style="color:var(--gold)">Remember:</strong> We're strategic about how we text — but everyone in your phone is a potential client. A genuine, human message is always the right move.
+      </div>
+
+      <div class="post-gen" id="textgen-form">
+        <div class="pgh">
+          <div class="pgi">💬</div>
+          <div><div class="pgt">Build my text</div><div class="pgs">3 quick questions → a real, human message you can copy and send right now</div></div>
+        </div>
+
+        <div class="gq">
+          <div class="gl">Who is this person?</div>
+          <div class="gopts" id="tq-who">
+            <div class="gopt" onclick="setTOpt('who',this,'a close friend')">👫 Close friend</div>
+            <div class="gopt" onclick="setTOpt('who',this,'a family member')">👨‍👩‍👧 Family</div>
+            <div class="gopt" onclick="setTOpt('who',this,'an acquaintance I know but we are not super close')">🤝 Acquaintance</div>
+            <div class="gopt" onclick="setTOpt('who',this,'a past client who I helped buy a home')">🏠 Past client — buyer</div>
+            <div class="gopt" onclick="setTOpt('who',this,'a past client who I helped sell a home')">🏡 Past client — seller</div>
+            <div class="gopt" onclick="setTOpt('who',this,'a past client who I helped both buy and sell a home')">🔑 Past client — both</div>
+            <div class="gopt" onclick="setTOpt('who',this,'someone I just met recently')">✨ Just met</div>
+            <div class="gopt" onclick="setTOpt('who',this,'someone I have not spoken to in a long time')">⏳ Haven\'t talked in a while</div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic">Remember — no matter how you know them, everyone is your client.</div>
+        </div>
+
+        <div class="gq">
+          <div class="gl">What's the context?</div>
+          <div class="gopts" id="tq-context">
+            <div class="gopt" onclick="setTOpt('context',this,'just checking in with no specific reason')">👋 Just checking in</div>
+            <div class="gopt" onclick="setTOpt('context',this,'following up on a previous conversation we had')">🔄 Following up</div>
+            <div class="gopt" onclick="setTOpt('context',this,'they mentioned they might be thinking about buying or selling')">🏠 They mentioned moving</div>
+            <div class="gopt" onclick="setTOpt('context',this,'I saw something that made me think of them')">💭 Thought of them</div>
+            <div class="gopt" onclick="setTOpt('context',this,'I want to reconnect after a long time of no contact')">🔁 Reconnecting</div>
+            <div class="gopt" onclick="setTOpt('context',this,'I want to congratulate them on something')">🎉 Celebrate something</div>
+          </div>
+        </div>
+
+        <div class="gq">
+          <div class="gl">What's the goal of this text?</div>
+          <div class="gopts" id="tq-goal">
+            <div class="gopt" onclick="setTOpt('goal',this,'referral_ask')">🙏 Ask for a referral — direct & confident</div>
+            <div class="gopt" onclick="setTOpt('goal',this,'genuine_checkin')">❤️ Genuine check-in — no business ask at all</div>
+            <div class="gopt" onclick="setTOpt('goal',this,'follow_up')">🔄 Follow up on a previous real estate convo</div>
+            <div class="gopt" onclick="setTOpt('goal',this,'reconnect')">🔁 Reconnect — just reaching back out</div>
+            <div class="gopt" onclick="setTOpt('goal',this,'meetup')">☕ Set up a coffee or catch-up</div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic">Never mix a genuine check-in with a business ask — pick one or the other.</div>
+        </div>
+
+        <div class="gq" id="tq-name-wrap">
+          <div class="gl">Their first name (optional)</div>
+          <input class="q-input" type="text" id="tq-name" placeholder="e.g. Marcus" style="max-width:200px">
+        </div>
+
+        <button class="gen-btn" id="tgen-btn" onclick="generateText()" disabled>Generate my text 💬</button>
+
+        <div class="post-out" id="text-out">
+          <div class="post-out-lbl">Your text — ready to send</div>
+          <div class="post-txt" id="text-txt"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+            <button class="copy-btn" onclick="copyText()" id="copy-text-btn">📋 Copy to clipboard</button>
+            <button class="copy-btn" style="background:var(--surface2);border-color:var(--border2);color:var(--muted)" onclick="resetTextGen()">🔄 Start over</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOCIAL -->
+    <div id="view-social" class="view">
+      <div class="page-title">Content & post generator</div>
+      <div class="page-sub">Stay consistent. One story daily. One real post weekly.</div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Daily story tracker</span><span class="card-sub" id="social-date"></span></div>
+          <div id="story-tracker"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Weekly post tracker</span><span class="card-sub">This week</span></div>
+          <div id="post-tracker"></div>
+        </div>
+      </div>
+      <div class="post-gen">
+        <div class="pgh">
+          <div class="pgi">✨</div>
+          <div><div class="pgt">Generate my weekly post</div><div class="pgs">Answer 3 quick questions — get a scroll-stopping caption ready to copy and paste</div></div>
+        </div>
+        <div class="gq">
+          <div class="gl">Who is posting?</div>
+          <div class="gopts" id="q-agent">
+            <div class="gopt" onclick="setOpt('agent',this,'Kevin')">Kevin</div>
+            <div class="gopt" onclick="setOpt('agent',this,'Steven')">Steven</div>
+            <div class="gopt" onclick="setOpt('agent',this,'Chris')">Chris</div>
+            <div class="gopt" onclick="setOpt('agent',this,'Logan')">Logan</div>
+            <div class="gopt" onclick="setOpt('agent',this,'Pepper')">Pepper</div>
+          </div>
+        </div>
+        <div class="gq">
+          <div class="gl">What happened this week?</div>
+          <div class="gopts" id="q-event">
+            <div class="gopt" onclick="setOpt('event',this,'We closed a deal')">🎉 Closed a deal</div>
+            <div class="gopt" onclick="setOpt('event',this,'We had a great showing')">🏡 Great showing</div>
+            <div class="gopt" onclick="setOpt('event',this,'We got a new listing')">📋 New listing</div>
+            <div class="gopt" onclick="setOpt('event',this,'A buyer got their offer accepted')">✅ Offer accepted</div>
+            <div class="gopt" onclick="setOpt('event',this,'Nothing specific — general market update')">📊 Market update</div>
+            <div class="gopt" onclick="setOpt('event',this,'I want to share something personal and motivational')">❤️ Personal story</div>
+          </div>
+          <div id="story-prompt-wrap" style="display:none;margin-top:12px">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Tell us a bit about your story</div>
+            <textarea id="story-prompt-text" class="q-input" rows="3" placeholder="e.g. I almost quit last year, then closed 3 deals in one month. I want to share what changed..." style="resize:vertical;line-height:1.6"></textarea>
+          </div>
+        </div>
+        <div class="gq">
+          <div class="gl">What vibe?</div>
+          <div class="gopts" id="q-vibe">
+            <div class="gopt" onclick="setOpt('vibe',this,'educational and informative')">🎓 Educational</div>
+            <div class="gopt" onclick="setOpt('vibe',this,'personal and authentic')">❤️ Personal</div>
+            <div class="gopt" onclick="setOpt('vibe',this,'hype and motivational')">🔥 Hype</div>
+            <div class="gopt" onclick="setOpt('vibe',this,'funny and relatable')">😂 Relatable</div>
+          </div>
+        </div>
+        <button class="gen-btn" id="gen-btn" onclick="generatePost()" disabled>Generate my post ✨</button>
+        <div class="post-out" id="post-out">
+          <div class="post-out-lbl">Your post — ready to copy</div>
+          <div class="post-txt" id="post-txt"></div>
+          <button class="copy-btn" onclick="copyPost()">📋 Copy to clipboard</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GOALS -->
+    <div id="view-goals" class="view">
+      <div class="page-title">90-day goals</div>
+      <div class="page-sub">Sonder Legacy · Utah market · $500k avg sale price</div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Daily minimums — non-negotiable</span></div>
+        <div class="min-grid">
+          <div class="min-card"><div class="min-val">20</div><div class="min-lbl">Calls per day</div></div>
+          <div class="min-card"><div class="min-val">5</div><div class="min-lbl">Real convos</div></div>
+          <div class="min-card"><div class="min-val">5</div><div class="min-lbl">Follow-ups</div></div>
+          <div class="min-card"><div class="min-val">5</div><div class="min-lbl">Referrals asked</div></div>
+          <div class="min-card"><div class="min-val">3–5</div><div class="min-lbl">Appts/week</div></div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Content minimums</div>
+          <div style="display:flex;gap:24px">
+            <div style="font-size:13px;color:var(--text)">📱 <strong>1 story post</strong> <span style="color:var(--muted)">every day</span></div>
+            <div style="font-size:13px;color:var(--text)">✨ <strong>1 real post</strong> <span style="color:var(--muted)">every week</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><span class="card-title">The math — per agent</span></div>
+          <div class="mr"><span class="ml">Avg sale price</span><span class="mv">$500,000</span></div>
+          <div class="mr"><span class="ml">Commission (2.5%)</span><span class="mv">$12,500 / closing</span></div>
+          <div class="mr"><span class="ml">GCI goal (90 days)</span><span class="mv">$15,000</span></div>
+          <div class="mr"><span class="ml">Closings needed</span><span class="mv">2</span></div>
+          <div class="mr"><span class="ml">Contracts needed</span><span class="mv">3 (80% close rate)</span></div>
+          <div class="mr"><span class="ml">Appointments needed</span><span class="mv">6 total</span></div>
+          <div class="mr"><span class="ml">Leads needed</span><span class="mv">30 (20% convert)</span></div>
+          <div class="mr"><span class="ml">Team GCI goal</span><span class="mv ma">$75,000</span></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">SOI follow-up cadence</span></div>
+          <div class="mr"><span class="ml">🔥 Hot — now</span><span class="mv">Every 2–3 days</span></div>
+          <div class="mr"><span class="ml">🌡️ Warm — 3–6 months</span><span class="mv">Weekly</span></div>
+          <div class="mr"><span class="ml">❄️ Cold — past/future</span><span class="mv">Monthly</span></div>
+          <div class="mr"><span class="ml">⭐ Referral partner</span><span class="mv">Bi-weekly</span></div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Prospecting window</div>
+            <div style="font-size:16px;font-weight:500;color:var(--purple)">8:30 AM – 11:00 AM</div>
+            <div style="font-size:12px;color:var(--hint);margin-top:3px">No showings. No admin. No exceptions.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Month-by-month roadmap</span></div>
+        <div class="three-col" style="margin-bottom:0">
+          <div class="mc cur">
+            <div class="mn" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-dim)">1</div>
+            <div class="mt">Month 1 — Build momentum</div>
+            <div class="mk"><span class="mkl">Daily calls</span><span class="mkv">20/day</span></div>
+            <div class="mk"><span class="mkl">SOI touches</span><span class="mkv">50 contacts</span></div>
+            <div class="mk"><span class="mkl">Appointments</span><span class="mkv">4 set</span></div>
+            <div class="mk"><span class="mkl">Closings</span><span class="mkv">1–2</span></div>
+            <div class="mk"><span class="mkl">GCI target</span><span class="mkv">$15k</span></div>
+            <div class="mf">Reactivate SOI. Ask every contact for a referral.</div>
+          </div>
+          <div class="mc">
+            <div class="mn" style="background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-dim)">2</div>
+            <div class="mt">Month 2 — Accelerate</div>
+            <div class="mk"><span class="mkl">Daily calls</span><span class="mkv">20/day</span></div>
+            <div class="mk"><span class="mkl">SOI touches</span><span class="mkv">75 contacts</span></div>
+            <div class="mk"><span class="mkl">Appointments</span><span class="mkv">5 set</span></div>
+            <div class="mk"><span class="mkl">Closings</span><span class="mkv">2</span></div>
+            <div class="mk"><span class="mkl">GCI target</span><span class="mkv">$25k</span></div>
+            <div class="mf">Deepen pipeline. Launch market update content.</div>
+          </div>
+          <div class="mc">
+            <div class="mn" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-dim)">3</div>
+            <div class="mt">Month 3 — Dominate</div>
+            <div class="mk"><span class="mkl">Daily calls</span><span class="mkv">20/day</span></div>
+            <div class="mk"><span class="mkl">SOI touches</span><span class="mkv">100 contacts</span></div>
+            <div class="mk"><span class="mkl">Appointments</span><span class="mkv">6+ set</span></div>
+            <div class="mk"><span class="mkl">Closings</span><span class="mkv">2–3</span></div>
+            <div class="mk"><span class="mkl">GCI target</span><span class="mkv">$35k</span></div>
+            <div class="mf">Convert pipeline. Generate referral momentum.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUYER QUESTIONNAIRE -->
+    <div id="view-buyer" class="view">
+      <div class="page-title">Buyer questionnaire</div>
+      <div class="page-sub">Simple questions to understand your buyer before you ever show a home.</div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">How are you sending this?</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap" id="buyer-send-opts">
+          <button class="qsend-btn" onclick="setSend('buyer','text',this)">💬 Text</button>
+          <button class="qsend-btn" onclick="setSend('buyer','email',this)">📧 Email</button>
+          <button class="qsend-btn" onclick="setSend('buyer','inperson',this)">🤝 In person — buyer consult</button>
+          <button class="qsend-btn" onclick="setSend('buyer','print',this)">🖨️ Need to print</button>
+        </div>
+        <div id="buyer-send-action" style="margin-top:14px;display:none"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Buyer intake questions</span><span class="card-sub">Sonder Legacy</span></div>
+        <div id="buyer-questions"></div>
+      </div>
+    </div>
+
+    <!-- SELLER QUESTIONNAIRE -->
+    <div id="view-seller" class="view">
+      <div class="page-title">Seller questionnaire</div>
+      <div class="page-sub">Simple questions to understand your seller before the listing appointment.</div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">How are you sending this?</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap" id="seller-send-opts">
+          <button class="qsend-btn" onclick="setSend('seller','text',this)">💬 Text</button>
+          <button class="qsend-btn" onclick="setSend('seller','email',this)">📧 Email</button>
+          <button class="qsend-btn" onclick="setSend('seller','inperson',this)">🤝 In person — listing consult</button>
+          <button class="qsend-btn" onclick="setSend('seller','print',this)">🖨️ Need to print</button>
+        </div>
+        <div id="seller-send-action" style="margin-top:14px;display:none"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Seller intake questions</span><span class="card-sub">Sonder Legacy</span></div>
+        <div id="seller-questions"></div>
+      </div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div id="view-reviews" class="view">
+      <div class="page-title">Review requests</div>
+      <div class="page-sub">Every closed client deserves to be asked. Make it a habit, not an afterthought.</div>
+      <div class="card" style="text-align:center;padding:32px">
+        <div style="font-size:48px;margin-bottom:12px">⭐</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);margin-bottom:8px">Ask for a review today</div>
+        <div style="font-size:14px;color:var(--muted);max-width:400px;margin:0 auto 24px">Send this link to any past client and ask them to share their experience. A 5-star review is worth more than any ad you could run.</div>
+        <a href="https://g.page/r/YOUR-GOOGLE-REVIEW-LINK/review" target="_blank" id="review-link" style="display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;padding:14px 28px;border-radius:10px;font-size:15px;font-weight:500;text-decoration:none;margin-bottom:16px">⭐ Open Google Reviews page</a>
+        <div style="font-size:12px;color:var(--muted)">Opens in a new tab — copy the link and text it to your client</div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><span class="card-title">What to say when you ask</span></div>
+          <div style="font-size:13px;color:var(--text);line-height:1.8;background:var(--surface2);border-radius:10px;padding:14px;font-style:italic">"Hey [name]! It was such a pleasure working with you. If you have 60 seconds, would you mind leaving us a Google review? It means the world to our team and helps other families find us. Here's the link: [paste link] — thank you so much! 🙏"</div>
+          <button class="copy-btn" style="margin-top:12px" onclick="copyReviewScript()">📋 Copy this script</button>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Team review tracker</span><span class="card-sub">This month</span></div>
+          <div id="review-tracker"></div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">Tap + when you ask a client for a review</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOKS -->
+    <div id="view-books" class="view">
+      <div class="page-title">What we're reading</div>
+      <div class="page-sub">Leaders are readers. Add a book and inspire the team.</div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Add a book</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end">
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Book title</div>
+            <input class="q-input" id="book-title" type="text" placeholder="e.g. Atomic Habits">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Your name</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="book-agent-sel">
+              <div class="q-opt" onclick="selectBookAgent(this,'Kevin')">Kevin</div>
+              <div class="q-opt" onclick="selectBookAgent(this,'Steven')">Steven</div>
+              <div class="q-opt" onclick="selectBookAgent(this,'Chris')">Chris</div>
+              <div class="q-opt" onclick="selectBookAgent(this,'Logan')">Logan</div>
+              <div class="q-opt" onclick="selectBookAgent(this,'Pepper')">Pepper</div>
+            </div>
+          </div>
+          <button class="gen-btn" style="margin:0;padding:10px 20px;width:auto" onclick="addBook()">Add 📚</button>
+        </div>
+      </div>
+      <div id="book-list"></div>
+    </div>
+
+  </main>
+</div><!-- end main-app -->
+
+<script>
+const agents=[
+  {name:'Kevin',initials:'KV',color:'#c9a84c',bg:'#2a1f0a',role:''},
+  {name:'Steven',initials:'ST',color:'#2dd4a0',bg:'#0d2b24',role:''},
+  {name:'Chris',initials:'CH',color:'#5ba3f5',bg:'#0d1e33',role:''},
+  {name:'Logan',initials:'LO',color:'#f5a623',bg:'#2a1f0a',role:''},
+  {name:'Pepper',initials:'PE',color:'#f06a50',bg:'#2a1209',role:''},
+];
+const MINS={calls:20,convos:5,followups:5,refs:5};
+const state=agents.map(()=>({
+  calls:0,convos:0,followups:0,refs:0,appts:0,
+  story:false,weekPost:false,submitted:false,
+  closings:0,
+  // Pipeline
+  activeListings:0,activeBuyers:0,pendingVolume:0,
+  // Funnel metrics
+  leads:0,apptHeld:0,contracts:0,
+  // Extra activities
+  doorsKnocked:0,openHouseSignIns:0,reviewsRequested:0,
+  // New daily checkboxes
+  sentHomes:false,showedHomes:false,updatedUnderContract:false,updatedListings:false,
+}));
+let currentAgent=0;
+const gen={agent:null,event:null,vibe:null};
+const books=[];
+let bookAgent=null;
+
+function setOpt(key,el,val){
+  gen[key]=val;
+  el.closest('.gopts').querySelectorAll('.gopt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  // Show story prompt box when personal story is selected
+  const storyWrap=document.getElementById('story-prompt-wrap');
+  if(storyWrap){storyWrap.style.display=(key==='event'&&val.includes('personal'))?'block':'none';}
+  document.getElementById('gen-btn').disabled=!(gen.agent&&gen.event&&gen.vibe);
+}
+
+async function generatePost(){
+  const btn=document.getElementById('gen-btn');
+  const out=document.getElementById('post-out');
+  const txt=document.getElementById('post-txt');
+  btn.disabled=true;
+  btn.innerHTML='<span class="ldots"><span></span><span></span><span></span></span>';
+  out.classList.remove('show');
+  const storyContext=document.getElementById('story-prompt-text')?.value.trim();
+  const prompt=`You are a top real estate social media expert. Write ONE scroll-stopping Instagram/Facebook post for a Utah real estate agent named ${gen.agent} at Sonder Legacy in Utah.
+
+What happened: ${gen.event}${storyContext?'\nTheir story details: '+storyContext:''}
+Tone: ${gen.vibe}
+Market: Utah, average home price $500,000
+
+Requirements:
+- Start with a POWERFUL hook — the first line must stop the scroll
+- 150-250 words total
+- 2-3 emojis placed naturally
+- End with a clear call to action
+- 8-10 relevant hashtags at the end
+- Sound real and human, never corporate or AI
+- Utah-specific feel where relevant
+
+Write ONLY the post. No intro, no explanation, no preamble.`;
+  try{
+    const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    txt.textContent=data.content.map(b=>b.text||'').join('');
+    out.classList.add('show');
+  }catch(e){
+    txt.textContent='Something went wrong. Please try again.';
+    out.classList.add('show');
+  }
+  btn.disabled=false;
+  btn.innerHTML='Regenerate ✨';
+}
+
+function copyPost(){
+  navigator.clipboard.writeText(document.getElementById('post-txt').textContent).then(()=>{
+    const b=document.querySelector('.copy-btn');
+    b.textContent='✅ Copied!';
+    setTimeout(()=>{b.innerHTML='📋 Copy to clipboard'},2000);
+  });
+}
+
+function status(s){
+  const n=[s.calls>=MINS.calls,s.convos>=MINS.convos,s.followups>=MINS.followups,s.refs>=MINS.refs].filter(Boolean).length;
+  if(n===4)return{l:'On fire 🔥',c:'b-fire'};
+  if(n===3)return{l:'On track',c:'b-track'};
+  if(n===2)return{l:'Needs push',c:'b-push'};
+  return{l:'Behind',c:'b-behind'};
+}
+
+function renderBroker(){
+  let tC=0,tCo=0,tR=0,tS=0;
+  state.forEach(s=>{tC+=s.calls;tCo+=s.convos;tR+=s.refs;if(s.submitted)tS++;});
+  document.getElementById('t-calls').textContent=tC;
+  document.getElementById('t-convos').textContent=tCo;
+  document.getElementById('t-refs').textContent=tR;
+  document.getElementById('t-sub').textContent=tS+'/5';
+  renderSpotlight();
+  document.getElementById('broker-tbody').innerHTML=agents.map((a,i)=>{
+    const s=state[i];const st=status(s);
+    const p=(k,m)=>Math.min(100,Math.round(s[k]/m*100));
+    const c=(k,m)=>s[k]>=m?'var(--teal)':'var(--text)';
+    return`<tr>
+      <td><div class="ac"><div class="av" style="background:${a.bg};color:${a.color}">${a.initials}</div><div><div class="an">${a.name}</div><div class="ar">${a.role}</div></div></div></td>
+      <td class="nc"><div class="nv" style="color:${c('calls',MINS.calls)}">${s.calls}</div><div class="bw"><div class="bf" style="width:${p('calls',MINS.calls)}%;background:${a.color}"></div></div><div class="nt">/${MINS.calls}</div></td>
+      <td class="nc"><div class="nv" style="color:${c('convos',MINS.convos)}">${s.convos}</div><div class="bw"><div class="bf" style="width:${p('convos',MINS.convos)}%;background:${a.color}"></div></div><div class="nt">/${MINS.convos}</div></td>
+      <td class="nc"><div class="nv" style="color:${c('followups',MINS.followups)}">${s.followups}</div><div class="bw"><div class="bf" style="width:${p('followups',MINS.followups)}%;background:${a.color}"></div></div><div class="nt">/${MINS.followups}</div></td>
+      <td class="nc"><div class="nv" style="color:${c('refs',MINS.refs)}">${s.refs}</div><div class="bw"><div class="bf" style="width:${p('refs',MINS.refs)}%;background:${a.color}"></div></div><div class="nt">/${MINS.refs}</div></td>
+      <td class="nc" style="font-size:18px">${s.story?'✅':'⬜'}</td>
+      <td style="text-align:center"><span class="badge ${st.c}">${st.l}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('gci-bars').innerHTML=agents.map((a,i)=>{
+    const apptPct=Math.min(100,Math.round((state[i].appts||0)/6*100));
+    const closePct=Math.min(100,Math.round((state[i].closings||0)/2*100));
+    return`<div class="gr"><span class="gn"><div class="gav" style="background:${a.bg};color:${a.color}">${a.initials}</div>${a.name}</span><div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Appts: ${state[i].appts||0}/6</div><div class="gbw"><div class="gbf" style="width:${apptPct}%;background:${a.color}"></div></div><div style="font-size:11px;color:var(--muted);margin-top:5px;margin-bottom:3px">Closings: ${state[i].closings||0}/2</div><div class="gbw"><div class="gbf" style="width:${closePct}%;background:${a.color};opacity:.6"></div></div></div></div>`;
+  }).join('');
+}
+
+function renderSelector(){
+  document.getElementById('agent-selector').innerHTML=agents.map((a,i)=>`
+    <div class="agent-pill${i===currentAgent?' active':''}" onclick="selectAgent(${i})">
+      <div class="pip" style="background:${a.color}"></div>${a.name}
+    </div>`).join('');
+}
+
+function selectAgent(idx){currentAgent=idx;renderSelector();renderAgentView(idx);}
+
+function renderAgentView(idx){
+  const a=agents[idx];const s=state[idx];const st=status(s);
+  const ic=(k,m)=>s[k]>=m?' met':s[k]>0?' miss':'';
+  document.getElementById('agent-content').innerHTML=`
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="av" style="background:${a.bg};color:${a.color};width:40px;height:40px;font-size:13px">${a.initials}</div>
+            <div><div style="font-size:16px;font-weight:500">${a.name}</div><div style="font-size:12px;color:var(--muted)">${a.role}</div></div>
+          </div>
+          <span class="badge ${st.c}">${st.l}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Today's activity log</div>
+        <div class="tgrid">
+          <div class="tc"><div class="tl">Calls made</div><input class="ti${ic('calls',MINS.calls)}" type="number" min="0" value="${s.calls}" oninput="upd(${idx},'calls',+this.value)"></div>
+          <div class="tc"><div class="tl">Convos</div><input class="ti${ic('convos',MINS.convos)}" type="number" min="0" value="${s.convos}" oninput="upd(${idx},'convos',+this.value)"></div>
+          <div class="tc"><div class="tl">Follow-ups</div><input class="ti${ic('followups',MINS.followups)}" type="number" min="0" value="${s.followups}" oninput="upd(${idx},'followups',+this.value)"></div>
+          <div class="tc"><div class="tl">Referrals</div><input class="ti${ic('refs',MINS.refs)}" type="number" min="0" value="${s.refs}" oninput="upd(${idx},'refs',+this.value)"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 14px">
+          <div class="tc"><div class="tl">Appts set today</div><input class="ti" type="number" min="0" value="${s.appts}" oninput="upd(${idx},'appts',+this.value)"></div>
+          <div class="tc">
+            <div class="tl">Story posted today</div>
+            <div style="height:44px;display:flex;align-items:center;justify-content:center">
+              <div class="scheck${s.story?' done':''}" onclick="toggleStory(${idx})" style="width:44px;height:44px;border-radius:10px;font-size:22px">${s.story?'✅':'📱'}</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          ${[{l:'Calls made',k:'calls',m:MINS.calls},{l:'Real conversations',k:'convos',m:MINS.convos},{l:'Follow-ups sent',k:'followups',m:MINS.followups},{l:'Referrals asked',k:'refs',m:MINS.refs}].map(c=>`
+          <div class="check-row"><span class="cl">${c.l}</span><span class="${state[idx][c.k]>=c.m?'cm':'cx'}">${state[idx][c.k]>=c.m?'✓ Met':'✗ '+state[idx][c.k]+' / '+c.m}</span></div>`).join('')}
+          <div class="check-row"><span class="cl">Story posted</span><span class="${s.story?'cm':'cx'}">${s.story?'✓ Done':'✗ Not yet'}</span></div>
+        </div>
+        <div style="margin-top:14px;margin-bottom:4px">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Did you do this today?</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;background:${s.sentHomes?'var(--teal-bg)':'var(--surface2)'};border:1px solid ${s.sentHomes?'var(--teal-dim)':'var(--border)'};border-radius:10px;padding:12px;cursor:pointer" onclick="toggleCheck(${idx},'sentHomes')">
+              <div style="font-size:20px">${s.sentHomes?'✅':'🏠'}</div>
+              <div><div style="font-size:13px;font-weight:500;color:var(--text)">Send homes</div><div style="font-size:11px;color:var(--muted)">Sent listings to buyers</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:${s.showedHomes?'var(--teal-bg)':'var(--surface2)'};border:1px solid ${s.showedHomes?'var(--teal-dim)':'var(--border)'};border-radius:10px;padding:12px;cursor:pointer" onclick="toggleCheck(${idx},'showedHomes')">
+              <div style="font-size:20px">${s.showedHomes?'✅':'🔑'}</div>
+              <div><div style="font-size:13px;font-weight:500;color:var(--text)">Show homes</div><div style="font-size:11px;color:var(--muted)">Conducted showings</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:${s.updatedUnderContract?'var(--teal-bg)':'var(--surface2)'};border:1px solid ${s.updatedUnderContract?'var(--teal-dim)':'var(--border)'};border-radius:10px;padding:12px;cursor:pointer" onclick="toggleCheck(${idx},'updatedUnderContract')">
+              <div style="font-size:20px">${s.updatedUnderContract?'✅':'📋'}</div>
+              <div><div style="font-size:13px;font-weight:500;color:var(--text)">Under contract update</div><div style="font-size:11px;color:var(--muted)">Checked in on contracts</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:${s.updatedListings?'var(--teal-bg)':'var(--surface2)'};border:1px solid ${s.updatedListings?'var(--teal-dim)':'var(--border)'};border-radius:10px;padding:12px;cursor:pointer" onclick="toggleCheck(${idx},'updatedListings')">
+              <div style="font-size:20px">${s.updatedListings?'✅':'📊'}</div>
+              <div><div style="font-size:13px;font-weight:500;color:var(--text)">Listings update</div><div style="font-size:11px;color:var(--muted)">Checked in on listings</div></div>
+            </div>
+          </div>
+        </div>
+        <button class="submit-btn${s.submitted?' done':''}" onclick="submitDay(${idx})" ${s.submitted?'disabled':''}>${s.submitted?'✓ Day submitted — great work!':'Submit my day'}</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">90-day goal progress</span></div>
+        <div class="prog-row"><span class="pl">Closings (2 goal)</span><div class="pw"><div class="pf" style="width:${Math.min(100,Math.round((s.closings||0)/2*100))}%;background:${a.color}"></div></div><span class="pp">${s.closings||0} / 2</span></div>
+        <div class="prog-row"><span class="pl">Appts set (6 goal)</span><div class="pw"><div class="pf" style="width:${Math.min(100,Math.round(s.appts/6*100))}%;background:${a.color}"></div></div><span class="pp">${s.appts} / 6</span></div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Daily minimum status</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            ${[{l:'Calls (20)',k:'calls',m:MINS.calls},{l:'Convos (5)',k:'convos',m:MINS.convos},{l:'Follow-ups (5)',k:'followups',m:MINS.followups},{l:'Referrals (5)',k:'refs',m:MINS.refs}].map(c=>`
+            <div style="background:${state[idx][c.k]>=c.m?'var(--teal-bg)':'var(--red-bg)'};border:1px solid ${state[idx][c.k]>=c.m?'var(--teal-dim)':'var(--red-dim)'};border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:18px;font-weight:500;color:${state[idx][c.k]>=c.m?'var(--teal)':'var(--red)'}">${state[idx][c.k]}</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px">${c.l}</div>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXTRA ACTIVITIES -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><span class="card-title">🚪 Doors knocked</span><span class="card-sub">Optional activity</span></div>
+        <div class="tc"><div class="tl">Doors knocked today</div><input class="ti" type="number" min="0" value="${s.doorsKnocked||0}" oninput="upd(${idx},'doorsKnocked',+this.value)"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">🏡 Open house sign-ins</span><span class="card-sub">Optional activity</span></div>
+        <div class="tc"><div class="tl">Sign-ins collected</div><input class="ti" type="number" min="0" value="${s.openHouseSignIns||0}" oninput="upd(${idx},'openHouseSignIns',+this.value)"></div>
+      </div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Pipeline</span><span class="card-sub">Your active business right now</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Active listings</div>
+          <input class="ti" type="number" min="0" value="${s.activeListings||0}" oninput="upd(${idx},'activeListings',+this.value)" style="width:100%">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Active buyers</div>
+          <input class="ti" type="number" min="0" value="${s.activeBuyers||0}" oninput="upd(${idx},'activeBuyers',+this.value)" style="width:100%">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Pending volume ($)</div>
+          <input class="ti" type="number" min="0" value="${s.pendingVolume||0}" oninput="upd(${idx},'pendingVolume',+this.value)" style="width:100%;font-size:14px">
+          <div style="font-size:11px;color:var(--hint);margin-top:6px">Total $ under contract</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- METRICS -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Performance metrics</span><span class="card-sub">Data is king</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Total leads</div>
+          <input class="ti" type="number" min="0" value="${s.leads||0}" oninput="upd(${idx},'leads',+this.value)" style="width:100%">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Appointments held</div>
+          <input class="ti" type="number" min="0" value="${s.apptHeld||0}" oninput="upd(${idx},'apptHeld',+this.value)" style="width:100%">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Contracts signed</div>
+          <input class="ti" type="number" min="0" value="${s.contracts||0}" oninput="upd(${idx},'contracts',+this.value)" style="width:100%">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        ${(()=>{
+          const leadToAppt=s.leads>0?Math.round((s.apptHeld/s.leads)*100):0;
+          const apptToContract=s.apptHeld>0?Math.round((s.contracts/s.apptHeld)*100):0;
+          const pending=s.pendingVolume||0;
+          return[
+            {label:'Lead → Appt ratio',val:leadToAppt+'%',desc:'Of every 100 leads, how many become appointments. Industry avg: 20%. Above 30% is excellent.',good:leadToAppt>=20,low:leadToAppt<10},
+            {label:'Appt → Contract ratio',val:apptToContract+'%',desc:'Of every appointment held, how many sign with you. Industry avg: 50%. Above 70% means your consults are sharp.',good:apptToContract>=50,low:apptToContract<30},
+            {label:'Pending volume',val:'$'+pending.toLocaleString(),desc:'Total dollar value of homes currently under contract. This is your near-term income.',good:pending>0,low:pending===0},
+          ].map(m=>`
+          <div style="background:${m.good?'var(--teal-bg)':m.low?'var(--red-bg)':'var(--surface2)'};border:1px solid ${m.good?'var(--teal-dim)':m.low?'var(--red-dim)':'var(--border)'};border-radius:10px;padding:14px">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">${m.label}</div>
+            <div style="font-size:24px;font-weight:500;color:${m.good?'var(--teal)':m.low?'var(--red)':'var(--text)'};font-family:'DM Serif Display',serif">${m.val}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">${m.desc}</div>
+          </div>`).join('');
+        })()}
+      </div>
+    </div>
+
+    <!-- AI PERFORMANCE BRIEF -->
+    <div class="card" style="border-color:var(--navy);background:var(--accent-bg)">
+      <div class="card-header"><span class="card-title" style="color:var(--text)">🧠 Performance brief</span><button class="gen-btn" style="width:auto;padding:8px 16px;margin:0;font-size:12px" onclick="generateBrief(${idx})">Generate my brief</button></div>
+      <div id="brief-${idx}" style="font-size:14px;color:var(--muted);font-style:italic">Hit "Generate my brief" to get a personalized breakdown of what's working, what's not, and exactly what to do next to move the needle.</div>
+    </div>
+
+    <!-- FEELING OVERWHELMED -->
+    <div class="card" style="border-color:rgba(201,168,76,.3);background:var(--gold-bg);margin-bottom:32px">
+      <div class="card-header"><span class="card-title">😮‍💨 Feeling overwhelmed?</span></div>
+      <div style="font-size:14px;color:var(--text);line-height:1.8;margin-bottom:16px">That's okay. It happens to everyone. Here are a few things that actually help:</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:flex-start;gap:12px;background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border)">
+          <span style="font-size:22px">🚶</span>
+          <div><div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px">Step outside and take a walk</div><div style="font-size:13px;color:var(--muted)">Even 10 minutes clears your head more than staring at a screen. Come back fresh.</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border)">
+          <span style="font-size:22px">☕</span>
+          <div><div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px">Text Kevin and grab a coffee</div><div style="font-size:13px;color:var(--muted)">Seriously — reach out. That's what he's here for. No agenda, just a reset.</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border)">
+          <span style="font-size:22px">💬</span>
+          <div><div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px">Talk to Kevin or Steven</div><div style="font-size:13px;color:var(--muted)">You don't have to figure it out alone. A 10-minute conversation can change your whole day.</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border)">
+          <span style="font-size:22px">🎯</span>
+          <div><div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px">Do just one thing</div><div style="font-size:13px;color:var(--muted)">Don't look at the full list. Pick one call to make. One text to send. One thing. Then another.</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border)">
+          <span style="font-size:22px">❤️</span>
+          <div><div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px">Remember why you started</div><div style="font-size:13px;color:var(--muted)">You chose this path for a reason. The hard days are part of it — they don't last. You've got this.</div></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderSocial(){
+  const st=document.getElementById('story-tracker');
+  const pt=document.getElementById('post-tracker');
+  if(st)st.innerHTML=agents.map((a,i)=>`
+    <div class="social-row">
+      <div class="social-info"><div class="av" style="background:${a.bg};color:${a.color};width:32px;height:32px;font-size:11px">${a.initials}</div><div><div class="social-label">${a.name}</div><div class="social-sub">Story today</div></div></div>
+      <div class="scheck${state[i].story?' done':''}" onclick="toggleStory(${i})">${state[i].story?'✅':'📱'}</div>
+    </div>`).join('');
+  if(pt)pt.innerHTML=agents.map((a,i)=>`
+    <div class="social-row">
+      <div class="social-info"><div class="av" style="background:${a.bg};color:${a.color};width:32px;height:32px;font-size:11px">${a.initials}</div><div><div class="social-label">${a.name}</div><div class="social-sub">Real post this week</div></div></div>
+      <div class="scheck${state[i].weekPost?' done':''}" onclick="toggleWeekPost(${i})">${state[i].weekPost?'✅':'✨'}</div>
+    </div>`).join('');
+}
+
+function toggleCheck(idx,key){state[idx][key]=!state[idx][key];renderAgentView(idx);renderBroker();updateDots();saveAgentData(idx);}
+function toggleStory(idx){state[idx].story=!state[idx].story;renderBroker();renderSocial();if(currentAgent===idx)renderAgentView(idx);updateDots();saveAgentData(idx);}
+function toggleWeekPost(idx){state[idx].weekPost=!state[idx].weekPost;renderSocial();}
+function upd(idx,key,val){state[idx][key]=Math.max(0,val||0);renderBroker();renderAgentView(idx);updateDots();saveAgentData(idx);}
+function submitDay(idx){state[idx].submitted=true;renderAgentView(idx);renderBroker();updateDots();saveAgentData(idx);}
+function updateDots(){agents.forEach((a,i)=>{const d=document.getElementById('dot-'+i);if(!d)return;d.style.background=state[i].submitted?'var(--teal)':status(state[i]).c==='b-behind'?'var(--red)':a.color;});}
+async function generateBrief(idx){
+  const a=agents[idx];const s=state[idx];
+  const el=document.getElementById('brief-'+idx);
+  if(!el)return;
+  el.innerHTML='<span class="ldots"><span></span><span></span><span></span></span>';
+  const leadToAppt=s.leads>0?Math.round((s.apptHeld/s.leads)*100):0;
+  const apptToContract=s.apptHeld>0?Math.round((s.contracts/s.apptHeld)*100):0;
+  const prompt=`You are a sharp, direct real estate coach reviewing an agent's performance data. Write a 3-4 sentence personal performance brief for ${a.name}, a Utah real estate agent at Sonder Legacy.
+
+Their current numbers:
+- Daily calls: ${s.calls} (minimum: 20)
+- Conversations: ${s.convos} (minimum: 5)
+- Follow-ups: ${s.followups} (minimum: 5)
+- Referrals asked: ${s.refs} (minimum: 5)
+- Active listings: ${s.activeListings||0}
+- Active buyers: ${s.activeBuyers||0}
+- Lead to appointment ratio: ${leadToAppt}%
+- Appointment to contract ratio: ${apptToContract}%
+- Doors knocked: ${s.doorsKnocked||0}
+- Open house sign-ins: ${s.openHouseSignIns||0}
+
+Write a brief that:
+- Is direct, warm, and motivating — like a coach who cares
+- Highlights what they're doing well (if anything)
+- Identifies the ONE biggest thing holding them back
+- Gives ONE specific, actionable thing they should do TODAY to move the needle
+- Is 3-4 sentences max
+- Uses their first name
+
+Write only the brief. No preamble.`;
+  try{
+    const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:300,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    el.style.fontStyle='normal';
+    el.style.color='var(--text)';
+    el.style.lineHeight='1.7';
+    el.textContent=data.content.map(b=>b.text||'').join('').trim();
+  }catch(e){
+    el.textContent='Could not generate brief. Please try again.';
+  }
+}
+
+// ── REVIEWS ─────────────────────────────────────────────────────
+function copyReviewScript(){
+  const script=`Hey [name]! It was such a pleasure working with you. If you have 60 seconds, would you mind leaving us a Google review? It means the world to our team and helps other families find us. Here's the link: [paste link] — thank you so much! 🙏`;
+  navigator.clipboard.writeText(script).then(()=>{
+    const b=document.querySelector('.copy-btn');
+    if(b){b.textContent='✅ Copied!';setTimeout(()=>{b.innerHTML='📋 Copy this script'},2000);}
+  });
+}
+
+function renderReviewTracker(){
+  const el=document.getElementById('review-tracker');
+  if(!el)return;
+  el.innerHTML=agents.map((a,i)=>`
+    <div class="social-row">
+      <div class="social-info">
+        <div class="av" style="background:${a.bg};color:${a.color};width:30px;height:30px;font-size:10px">${a.initials}</div>
+        <div><div class="social-label">${a.name}</div><div class="social-sub">${state[i].reviewsRequested||0} requested this month</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px;font-weight:500;color:var(--gold)">${state[i].reviewsRequested||0}</span>
+        <button onclick="upd(${i},'reviewsRequested',(state[${i}].reviewsRequested||0)+1);renderReviewTracker()" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── BOOKS ─────────────────────────────────────────────────────
+function selectBookAgent(el,name){
+  bookAgent=name;
+  document.querySelectorAll('#book-agent-sel .q-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function addBook(){
+  const title=document.getElementById('book-title').value.trim();
+  if(!title||!bookAgent)return;
+  books.unshift({title,agent:bookAgent,date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})});
+  document.getElementById('book-title').value='';
+  bookAgent=null;
+  document.querySelectorAll('#book-agent-sel .q-opt').forEach(o=>o.classList.remove('sel'));
+  renderBooks();
+  renderHomeBooks();
+}
+
+function renderBooks(){
+  const el=document.getElementById('book-list');
+  if(!el)return;
+  if(books.length===0){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">No books added yet — be the first! 📚</div>';return;}
+  el.innerHTML=books.map((b,i)=>{
+    const ag=agents.find(a=>a.name===b.agent)||agents[0];
+    return`<div class="card" style="display:flex;align-items:center;gap:14px">
+      <div style="font-size:36px">📚</div>
+      <div style="flex:1">
+        <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)">${b.title}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px">Added by <span style="color:${ag.color};font-weight:500">${b.agent}</span> · ${b.date}</div>
+      </div>
+      <button onclick="books.splice(${i},1);renderBooks();renderHomeBooks()" style="background:none;border:none;color:var(--hint);font-size:18px;cursor:pointer">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderHomeBooks(){
+  // Shows on the home leaderboard screen
+  const el=document.getElementById('home-books');
+  if(!el||books.length===0)return;
+  el.style.display='block';
+  el.innerHTML=`<div class="card" style="margin-bottom:16px">
+    <div class="card-header"><span class="card-title">📚 What we're reading</span></div>
+    ${books.slice(0,3).map(b=>{
+      const ag=agents.find(a=>a.name===b.agent)||agents[0];
+      return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:20px">📖</span>
+        <div><div style="font-size:13px;font-weight:500;color:var(--text)">${b.title}</div><div style="font-size:11px;color:${ag.color}">${b.agent}</div></div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function switchView(v,btn){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(v==='social')renderSocial();
+  if(v==='textgen')resetTextGen();
+  if(v==='buyer')renderQuestionnaire('buyer');
+  if(v==='seller')renderQuestionnaire('seller');
+  if(v==='reviews')renderReviewTracker();
+  if(v==='books')renderBooks();
+}
+
+const buyerQs=[
+  {q:"Why are you looking to buy?",type:"options",opts:["First-time buyer","Upsizing","Downsizing","Investment property","Relocating","New chapter in life"]},
+  {q:"In which city or cities can you see yourself living?",type:"text",placeholder:"e.g. Salt Lake City, Provo, Draper..."},
+  {q:"What is your budget range?",type:"options",opts:["Under $300k","$300k–$400k","$400k–$500k","$500k–$650k","$650k–$800k","$800k+"]},
+  {q:"How many bedrooms do you need?",type:"options",opts:["2","3","4","5+","Flexible"]},
+  {q:"How many bathrooms?",type:"options",opts:["1","2","3","4+","Flexible"]},
+  {q:"Garage?",type:"options",opts:["1 car","2 car","3 car","Any","Not needed"]},
+  {q:"Yard?",type:"options",opts:["Yes — big yard","Yes — small yard","No preference","No yard needed"]},
+  {q:"Are you currently renting or do you own?",type:"options",opts:["Renting","Own — need to sell first","Own — no contingency","Other"]},
+  {q:"Have you been pre-approved for a mortgage?",type:"options",opts:["Yes","No — need a lender","Already paying cash"]},
+  {q:"What is your ideal move-in timeline?",type:"options",opts:["ASAP","1–3 months","3–6 months","6+ months","Just exploring"]},
+  {q:"What is most important to you in a home?",type:"text",placeholder:"e.g. school district, neighborhood, layout, views..."},
+  {q:"Anything else we should know?",type:"text",placeholder:"Special needs, must-haves, deal breakers..."},
+];
+
+const sellerQs=[
+  {q:"Why are you looking to sell?",type:"options",opts:["Upsizing","Downsizing","Relocating","Divorce / life change","Investment","Estate sale","Other"]},
+  {q:"What is the address of the property?",type:"text",placeholder:"Street address, city, zip..."},
+  {q:"How long have you owned the home?",type:"options",opts:["Less than 1 year","1–3 years","3–5 years","5–10 years","10+ years"]},
+  {q:"What is your ideal selling timeline?",type:"options",opts:["ASAP","30–60 days","60–90 days","3–6 months","Just exploring"]},
+  {q:"Do you have a price in mind?",type:"options",opts:["Yes — I have a number","Somewhat — open to your opinion","No — rely on your expertise"]},
+  {q:"Are you buying another home after selling?",type:"options",opts:["Yes — already found one","Yes — need to find one first","No","Not sure yet"]},
+  {q:"What updates or improvements have been made?",type:"text",placeholder:"e.g. new roof, kitchen remodel, HVAC..."},
+  {q:"Are there any known issues with the property?",type:"options",opts:["No known issues","Minor cosmetic","Some repairs needed","Yes — I'll share details"]},
+  {q:"Do you currently have a mortgage on the property?",type:"options",opts:["Yes","No — owned free and clear","Not sure of payoff amount"]},
+  {q:"How did you hear about us?",type:"options",opts:["Referral from friend/family","Social media","Past client","Google","Other"]},
+  {q:"What matters most to you in choosing an agent?",type:"text",placeholder:"e.g. communication, experience, marketing, price..."},
+  {q:"Anything else we should know?",type:"text",placeholder:"Special circumstances, timing needs, concerns..."},
+];
+
+const qAnswers={buyer:{},seller:{}};
+
+function renderQuestionnaire(type){
+  const qs=type==='buyer'?buyerQs:sellerQs;
+  const el=document.getElementById(type+'-questions');
+  if(!el)return;
+  el.innerHTML=qs.map((q,i)=>`
+    <div class="q-item">
+      <div class="q-num">Question ${i+1}</div>
+      <div class="q-text">${q.q}</div>
+      ${q.type==='options'?`<div class="q-opts">${q.opts.map(o=>`<div class="q-opt${qAnswers[type][i]===o?' sel':''}" onclick="selectQOpt('${type}',${i},this,'${o}')">${o}</div>`).join('')}</div>`:''}
+      ${q.type==='text'||q.type==='options'?`<input class="q-input" type="text" placeholder="${q.placeholder||'Add notes...'}" value="${qAnswers[type]['note_'+i]||''}" oninput="qAnswers['${type}']['note_'+${i}]=this.value">`:''}
+    </div>`).join('');
+}
+
+function selectQOpt(type,idx,el,val){
+  qAnswers[type][idx]=val;
+  el.closest('.q-opts').querySelectorAll('.q-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function setSend(type,method,el){
+  document.querySelectorAll('#'+type+'-send-opts .qsend-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  const actionEl=document.getElementById(type+'-send-action');
+  const label=type==='buyer'?'Buyer Questionnaire':'Seller Questionnaire';
+  const qs=type==='buyer'?buyerQs:sellerQs;
+  const plain=`Hi! I'm excited to work with you. Before we connect, I'd love to learn a bit more about what you're looking for. Here are a few quick questions:\n\n`+qs.map((q,i)=>`${i+1}. ${q.q}${q.type==='options'?' ('+q.opts.join(' / ')+')\n   Answer: ___________':'\n   Answer: ___________'}`).join('\n\n')+`\n\nFeel free to reply back or we can go through these together!\n\n— Sonder Legacy`;
+  actionEl.style.display='block';
+  if(method==='text'||method==='email'){
+    actionEl.innerHTML=`<div class="send-box"><div class="send-box-title">${method==='text'?'📱 Copy & paste into a text':'📧 Copy & paste into an email'}</div><div class="send-text">${plain.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div><button class="copy-q-btn" onclick="copyQ('${type}')">📋 Copy to clipboard</button></div>`;
+    qTexts[type]=plain;
+  } else if(method==='inperson'){
+    actionEl.innerHTML=`<div class="send-box" style="border-color:var(--teal-dim)"><div class="send-box-title" style="color:var(--teal)">🤝 In-person — go through these questions together</div><div style="font-size:13px;color:var(--muted);margin-bottom:6px">Scroll down and fill in answers as you talk. Use the options to tap responses.</div></div>`;
+  } else if(method==='print'){
+    actionEl.innerHTML=`<div class="send-box" style="border-color:var(--teal-dim)"><div class="send-box-title" style="color:var(--teal)">🖨️ Print-ready version</div><div style="font-size:13px;color:var(--muted);margin-bottom:8px">Opens a clean print-friendly version of the ${label}.</div><button class="print-btn" onclick="printQ('${type}')">🖨️ Open print view</button></div>`;
+  }
+}
+
+const qTexts={buyer:'',seller:''};
+
+function copyQ(type){
+  navigator.clipboard.writeText(qTexts[type]).then(()=>{
+    const b=document.querySelector('.copy-q-btn');
+    b.textContent='✅ Copied!';
+    setTimeout(()=>{b.innerHTML='📋 Copy to clipboard'},2000);
+  });
+}
+
+function printQ(type){
+  const qs=type==='buyer'?buyerQs:sellerQs;
+  const title=type==='buyer'?'Buyer Questionnaire':'Seller Questionnaire';
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>Sonder Legacy — ${title}</title><style>
+    body{font-family:'Georgia',serif;max-width:680px;margin:40px auto;padding:0 24px;color:#111;line-height:1.6}
+    .header{text-align:center;margin-bottom:36px;padding-bottom:20px;border-bottom:2px solid #111}
+    .logo{font-size:22px;font-weight:700;letter-spacing:0.05em;margin-bottom:4px}
+    .sub{font-size:13px;color:#666}
+    .q{margin-bottom:28px}
+    .qnum{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+    .qtext{font-size:15px;font-weight:600;margin-bottom:10px}
+    .opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+    .opt{padding:5px 14px;border:1px solid #ccc;border-radius:20px;font-size:12px}
+    .line{border:none;border-bottom:1px solid #ccc;margin:6px 0 0;height:24px}
+    .footer{margin-top:40px;padding-top:16px;border-top:1px solid #ddd;text-align:center;font-size:12px;color:#888}
+    @media print{body{margin:20px}}
+  </style></head><body>
+  <div class="header"><div class="logo">🏡 Sonder Legacy</div><div class="sub">${title} · sonderlegacy.org</div></div>
+  ${qs.map((q,i)=>`<div class="q"><div class="qnum">Question ${i+1}</div><div class="qtext">${q.q}</div>${q.type==='options'?`<div class="opts">${q.opts.map(o=>`<div class="opt">☐ ${o}</div>`).join('')}</div>`:''}${q.type==='text'||q.type==='options'?'<div class="line"></div>':''}</div>`).join('')}
+  <div class="footer">Sonder Legacy · Utah Real Estate · sonderlegacy.org</div>
+  </body></html>`);
+  win.document.close();
+  win.print();
+}
+
+const now=new Date();
+const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const sm=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+document.getElementById('sidebar-date').textContent=days[now.getDay()]+', '+months[now.getMonth()]+' '+now.getDate();
+document.getElementById('broker-date').textContent=sm[now.getMonth()]+' '+now.getDate()+', '+now.getFullYear();
+const sd=document.getElementById('social-date');if(sd)sd.textContent=sm[now.getMonth()]+' '+now.getDate();
+
+// ── TEXT GENERATOR ───────────────────────────────────────────────
+const tOpts={who:null,context:null,goal:null};
+function setTOpt(key,el,val){
+  tOpts[key]=val;
+  el.closest('.gopts').querySelectorAll('.gopt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('tgen-btn').disabled=!(tOpts.who&&tOpts.context&&tOpts.goal);
+}
+
+async function generateText(){
+  const btn=document.getElementById('tgen-btn');
+  const out=document.getElementById('text-out');
+  const txt=document.getElementById('text-txt');
+  const name=document.getElementById('tq-name').value.trim();
+  btn.disabled=true;
+  btn.innerHTML='<span class="ldots"><span></span><span></span><span></span></span>';
+  out.classList.remove('show');
+
+  const goalInstructions = {
+    referral_ask: `Write a direct, confident referral ask. The agent is growing their real estate business and they know they're good at it. They're asking this person to refer anyone they know who might be thinking about buying or selling. Be upfront — no fake small talk before the ask, no pretending this is just a friendly check-in. It's a business ask and that's okay. Be warm and genuine ABOUT the ask itself, not before it. Example tone: "Hey, purely business — I'm growing my real estate business and I know I'm really good at what I do. If you know anyone even remotely thinking about buying or selling, I'd love if you connected us. I'd really appreciate it." Adapt this naturally for the relationship.`,
+    genuine_checkin: `Write a genuine personal check-in with ZERO business agenda. Ask about their life, something personal, something real. No real estate mention whatsoever. This is purely human connection. If you sneak in ANY business ask, you've failed.`,
+    follow_up: `Follow up on a previous real estate conversation. They've already talked — this is a natural next step. Be direct about where things stand and what the next move is.`,
+    reconnect: `Reconnect after time apart. Acknowledge the gap naturally — don't pretend it hasn't been a while. Keep it real and warm. No business ask.`,
+    meetup: `Ask to grab coffee or catch up in person. Keep it casual and genuine. One clear ask, no fluff.`
+  };
+
+  const prompt=`You are writing a real text message for a Utah real estate agent at Sonder Legacy.
+
+Person: ${tOpts.who}${name?' named '+name:''}
+Context: ${tOpts.context}
+
+WHAT TO WRITE:
+${goalInstructions[tOpts.goal]||tOpts.goal}
+
+RULES — non-negotiable:
+- 1-4 sentences max. This is a TEXT.
+- Never mix a genuine check-in with a business ask in the same message. Pick one.
+- Never use: "I hope this finds you well", "Just wanted to reach out", "Touching base", "Circling back", "Hope you're doing amazing", "I wanted to check in and also..."
+- Sound like a real person texting a real person
+- Be confident, not apologetic about business asks
+- No emojis unless it genuinely fits
+
+Write ONLY the text. No quotes, no explanation.`;
+
+  try{
+    const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:300,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const generatedText=data.content.map(b=>b.text||'').join('').trim();
+    txt.textContent=generatedText;
+    out.classList.add('show');
+  }catch(e){
+    txt.textContent='Something went wrong. Please try again.';
+    out.classList.add('show');
+  }
+  btn.disabled=false;
+  btn.innerHTML='Regenerate 💬';
+}
+
+function copyText(){
+  navigator.clipboard.writeText(document.getElementById('text-txt').textContent).then(()=>{
+    const b=document.getElementById('copy-text-btn');
+    b.textContent='✅ Copied!';
+    setTimeout(()=>{b.innerHTML='📋 Copy to clipboard'},2000);
+  });
+}
+
+function resetTextGen(){
+  tOpts.who=null;tOpts.context=null;tOpts.goal=null;
+  document.querySelectorAll('#tq-who .gopt,#tq-context .gopt,#tq-goal .gopt').forEach(o=>o.classList.remove('sel'));
+  document.getElementById('tq-name').value='';
+  document.getElementById('tgen-btn').disabled=true;
+  document.getElementById('tgen-btn').innerHTML='Generate my text 💬';
+  document.getElementById('text-out').classList.remove('show');
+}
+
+const quotes=[
+  "The difference between a successful person and others is not a lack of strength, not a lack of knowledge, but rather a lack of will. — Vince Lombardi",
+  "You don't close a sale, you open a relationship if you want to build a long-term, successful enterprise. — Patricia Fripp",
+  "Every morning you have two choices: continue to sleep with your dreams, or wake up and chase them.",
+  "Your income is directly related to your philosophy, not the economy. — Jim Rohn",
+  "The secret of getting ahead is getting started. — Mark Twain",
+  "Success is nothing more than a few simple disciplines, practiced every day. — Jim Rohn",
+  "Make one person smile every day and you'll be the most powerful prospector in the room.",
+  "The best time to plant a tree was 20 years ago. The second best time is now. — Chinese Proverb",
+  "Champions aren't made in gyms. Champions are made from something they have deep inside them — a desire, a dream, a vision. — Muhammad Ali",
+  "Don't watch the clock; do what it does. Keep going. — Sam Levenson",
+  "Real estate cannot be lost or stolen, nor can it be carried away. — Franklin D. Roosevelt",
+  "Ninety percent of all millionaires become so through owning real estate. — Andrew Carnegie",
+  "The most successful people are those who do all year long what others do in January. — Unknown",
+  "Your network is your net worth. — Porter Gale",
+  "It's not about having the right opportunities. It's about handling the opportunities right. — Mark Hunter",
+];
+function renderQuote(){
+  const el=document.getElementById('quote-bar');
+  if(!el)return;
+  const idx=new Date().getDate()%quotes.length;
+  el.textContent=quotes[idx];
+}
+
+// ── SPOTLIGHT & LEADERBOARD ──────────────────────────────────────
+let spotMode='activity';
+function setSpotlightMode(mode,btn){
+  spotMode=mode;
+  document.querySelectorAll('.sptab').forEach(t=>t.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderSpotlight();
+}
+
+function getLeaderboard(mode){
+  return agents.map((a,i)=>{
+    const s=state[i];
+    let val=0,label='';
+    if(mode==='activity'){
+      const score=[s.calls>=MINS.calls,s.convos>=MINS.convos,s.followups>=MINS.followups,s.refs>=MINS.refs].filter(Boolean).length;
+      val=score;label=score+'/4 minimums hit today';
+    }
+    else if(mode==='closings'){val=s.closings||0;label=(s.closings||0)+' closings this quarter';}
+    else if(mode==='appts'){val=s.appts||0;label=(s.appts||0)+' appointments set';}
+    return{...a,idx:i,val,label,s};
+  }).sort((a,b)=>b.val-a.val);
+}
+
+function renderSpotlight(){
+  const board=getLeaderboard(spotMode);
+  const top=board[0];
+  const nameEl=document.getElementById('spotlight-name');
+  const statEl=document.getElementById('spotlight-stat');
+  const subEl=document.getElementById('spotlight-sub');
+  const emojiEl=document.getElementById('spotlight-emoji');
+  if(nameEl)nameEl.textContent=top.name;
+  if(statEl)statEl.textContent=top.label;
+  if(emojiEl)emojiEl.textContent=top.val>0?'💰':'🏆';
+  if(subEl){
+    const labels={activity:'Daily activity leaderboard',closings:'Closings leaderboard',appts:'Appointments leaderboard'};
+    subEl.textContent=labels[spotMode];
+  }
+  const maxVal=Math.max(board[0].val,1);
+  const medals=['🥇','🥈','🥉','4','5'];
+  const rankEl=document.getElementById('rank-list');
+  if(rankEl)rankEl.innerHTML=board.map((a,pos)=>`
+    <div class="rank-item${pos===0?' rank-1':''}">
+      <div class="rank-pos${pos===0?' gold':''}">${medals[pos]}</div>
+      <div class="rank-av" style="background:${a.bg};color:${a.color}">${a.initials}</div>
+      <div class="rank-info">
+        <div class="rank-name">${a.name}</div>
+        <div class="rank-detail">${a.label}</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(a.val/maxVal*100)}%;background:${a.color}"></div></div>
+      </div>
+    </div>`).join('');
+}
+
+renderSelector();renderAgentView(0);renderBroker();renderQuote();renderSpotlight();
+
+// ── LOGIN SYSTEM ─────────────────────────────────────────────────
+const MASTER_PIN='7399';
+const MASTER_AGENTS=['Kevin','Steven'];
+let loginAgent=null;
+let pinEntry='';
+let settingPin=false;
+let tempPin='';
+
+function initLogin(){
+  // Build agent buttons
+  const btns=document.getElementById('agent-btns');
+  btns.innerHTML=agents.map(a=>`
+    <button class="agent-btn" onclick="selectLoginAgent('${a.name}',this)">${a.name}</button>
+  `).join('');
+}
+
+async function selectLoginAgent(name,el){
+  loginAgent=name;
+  pinEntry='';
+  tempPin='';
+  settingPin=false;
+  document.querySelectorAll('.agent-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  updatePinDots();
+  document.getElementById('login-msg').textContent='';
+  const prompt=document.getElementById('pin-prompt');
+  if(MASTER_AGENTS.includes(name)){
+    prompt.textContent='Enter your master pin to access everything.';
+  } else {
+    const stored=await getPin(name);
+    if(!stored){
+      settingPin=true;
+      prompt.textContent='Welcome '+name+'! Create your 4-digit pin to secure your account.';
+    } else {
+      prompt.textContent='Enter your pin to access your dashboard.';
+    }
+  }
+  document.getElementById('pin-section').style.display='block';
+}
+
+function numPress(n){
+  if(n==='⌫'){
+    pinEntry=pinEntry.slice(0,-1);
+    updatePinDots();
+    return;
+  }
+  if(n===''||pinEntry.length>=4)return;
+  pinEntry+=n;
+  updatePinDots();
+  if(pinEntry.length===4)setTimeout(checkPin,200);
+}
+
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const dot=document.getElementById('pd'+i);
+    dot.classList.toggle('filled',i<pinEntry.length);
+    dot.classList.remove('error');
+    dot.textContent=i<pinEntry.length?'●':'';
+  }
+}
+
+async function checkPin(){
+  const msg=document.getElementById('login-msg');
+  if(pinEntry===MASTER_PIN){loginSuccess(loginAgent,true);return;}
+  if(settingPin){
+    if(tempPin===''){
+      tempPin=pinEntry;pinEntry='';updatePinDots();
+      document.getElementById('pin-prompt').textContent='Confirm your pin.';
+      msg.textContent='';return;
+    } else {
+      if(pinEntry===tempPin){
+        await savePin(loginAgent,pinEntry);
+        loginSuccess(loginAgent,false);
+      } else {
+        pinEntry='';tempPin='';updatePinDots();
+        showPinError('Pins didn\'t match. Try again.');
+        document.getElementById('pin-prompt').textContent='Create your 4-digit pin.';
+      }
+      return;
+    }
+  }
+  const stored=await getPin(loginAgent);
+  if(pinEntry===stored){loginSuccess(loginAgent,false);}
+  else{pinEntry='';updatePinDots();showPinError('Wrong pin. Try again.');}
+}
+
+function showPinError(msg){
+  document.getElementById('login-msg').textContent=msg;
+  for(let i=0;i<4;i++){
+    const dot=document.getElementById('pd'+i);
+    dot.classList.add('error');
+  }
+  setTimeout(()=>{
+    for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.remove('error');
+  },600);
+}
+
+async function loginSuccess(name,isMaster){
+  document.getElementById('login-page').classList.add('hidden');
+  document.getElementById('main-app').style.display='flex';
+  if(isMaster){
+    await loadAllAgents();
+    switchView('broker',document.querySelector('.nav-item'));
+    return;
+  }
+  const idx=agents.findIndex(a=>a.name===name);
+  if(idx>=0){
+    await loadAgentData(idx);
+    renderBroker();
+    switchView('agent',null);
+    selectAgent(idx);
+    document.querySelectorAll('.nav-item').forEach(btn=>{
+      const txt=btn.textContent.trim();
+      if(txt.includes('👤')&&!txt.includes(name)){btn.style.display='none';}
+    });
+    document.querySelectorAll('.nav-item').forEach(btn=>{
+      if(btn.textContent.includes('Team dashboard'))btn.style.display='none';
+    });
+  }
+}
+
+initLogin();
+
+
+function toggleTheme(){
+  document.body.classList.toggle('light');
+  const isLight=document.body.classList.contains('light');
+  document.getElementById('theme-label').textContent=isLight?'☀️ Light mode':'🌙 Dark mode';
+  localStorage.setItem('sl-theme',isLight?'light':'dark');
+}
+if(localStorage.getItem('sl-theme')==='light'){
+  document.body.classList.add('light');
+  const el=document.getElementById('theme-label');
+  if(el)el.textContent='☀️ Light mode';
+}
+
+// ── SUPABASE ─────────────────────────────────────────────────────
+const SUPABASE_URL='https://kctyueybsgkmorfcmodm.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjdHl1ZXlic2drbW9yZmNtb2RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5OTM5MzgsImV4cCI6MjA5NTU2OTkzOH0.iIsnXSc1AvNMxHd9138gv8u49dP8oNG5miNUEIhWbOs';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+function todayStr(){
+  return new Date().toISOString().split('T')[0];
+}
+
+async function saveAgentData(idx){
+  const a=agents[idx];
+  const s=state[idx];
+  const today=todayStr();
+  const row={
+    agent_name:a.name,
+    date:today,
+    calls:s.calls||0,
+    convos:s.convos||0,
+    followups:s.followups||0,
+    refs:s.refs||0,
+    appts:s.appts||0,
+    story:s.story||false,
+    submitted:s.submitted||false,
+    doors_knocked:s.doorsKnocked||0,
+    open_house_signins:s.openHouseSignIns||0,
+    active_listings:s.activeListings||0,
+    active_buyers:s.activeBuyers||0,
+    pending_volume:s.pendingVolume||0,
+    leads:s.leads||0,
+    appt_held:s.apptHeld||0,
+    contracts:s.contracts||0,
+    closings:s.closings||0,
+    sent_homes:s.sentHomes||false,
+    showed_homes:s.showedHomes||false,
+    updated_under_contract:s.updatedUnderContract||false,
+    updated_listings:s.updatedListings||false,
+  };
+  await sb.from('daily_activity').upsert(row,{onConflict:'agent_name,date'});
+}
+
+async function loadAgentData(idx){
+  const a=agents[idx];
+  const today=todayStr();
+  const{data}=await sb.from('daily_activity').select('*').eq('agent_name',a.name).eq('date',today).single();
+  if(data){
+    state[idx].calls=data.calls||0;
+    state[idx].convos=data.convos||0;
+    state[idx].followups=data.followups||0;
+    state[idx].refs=data.refs||0;
+    state[idx].appts=data.appts||0;
+    state[idx].story=data.story||false;
+    state[idx].submitted=data.submitted||false;
+    state[idx].doorsKnocked=data.doors_knocked||0;
+    state[idx].openHouseSignIns=data.open_house_signins||0;
+    state[idx].activeListings=data.active_listings||0;
+    state[idx].activeBuyers=data.active_buyers||0;
+    state[idx].pendingVolume=data.pending_volume||0;
+    state[idx].leads=data.leads||0;
+    state[idx].apptHeld=data.appt_held||0;
+    state[idx].contracts=data.contracts||0;
+    state[idx].closings=data.closings||0;
+    state[idx].sentHomes=data.sent_homes||false;
+    state[idx].showedHomes=data.showed_homes||false;
+    state[idx].updatedUnderContract=data.updated_under_contract||false;
+    state[idx].updatedListings=data.updated_listings||false;
+  }
+}
+
+async function loadAllAgents(){
+  for(let i=0;i<agents.length;i++){
+    await loadAgentData(i);
+  }
+  renderBroker();
+  renderSpotlight();
+}
+
+async function savePin(agentName,pin){
+  await sb.from('agent_pins').upsert({agent_name:agentName,pin:pin},{onConflict:'agent_name'});
+}
+
+async function getPin(agentName){
+  const{data}=await sb.from('agent_pins').select('pin').eq('agent_name',agentName).single();
+  return data?data.pin:null;
+}
+
+async function saveBooksToDb(){
+  // Save books as JSON in a single row
+  await sb.from('books').upsert({id:1,title:JSON.stringify(books),agent_name:'all',date:todayStr()});
+}
+
+async function loadBooksFromDb(){
+  const{data}=await sb.from('books').select('*').eq('agent_name','all').single();
+  if(data&&data.title){
+    try{
+      const parsed=JSON.parse(data.title);
+      if(Array.isArray(parsed)){books.splice(0,books.length,...parsed);}
+    }catch(e){}
+  }
+}
+
+// Load all data on startup
+loadAllAgents();
+loadBooksFromDb();
+</script>
+</body>
+</html>
