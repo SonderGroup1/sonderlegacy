@@ -1101,7 +1101,8 @@ function renderKPI(idx){
   const closingsNeeded=Math.ceil(g.income_goal/gciPerClosing);
   const apptsNeeded=Math.ceil(closingsNeeded/0.5);
   const leadsNeeded=Math.ceil(apptsNeeded/0.2);
-  const callPct=Math.min(100,Math.round((s.calls/20)*100));
+  const personalCalls=g.personal_calls||20;
+  const callPct=Math.min(100,Math.round((s.calls/personalCalls)*100));
   const convoPct=Math.min(100,Math.round((s.convos/5)*100));
   const refPct=Math.min(100,Math.round((s.refs/5)*100));
   const apptPct=Math.min(100,Math.round((s.appts/Math.max(apptsNeeded,1))*100));
@@ -1113,23 +1114,54 @@ function renderKPI(idx){
   const onTrack=activityScore>=0.9;const close=activityScore>=0.6&&activityScore<0.9;
 
   el.innerHTML=`
+    ${!g.hasIntake?`<div style="background:var(--amber-bg);border:1px solid var(--amber-dim);border-radius:12px;padding:16px;margin-bottom:16px;font-size:13px;color:var(--amber)">
+      ⚠️ You haven't filled out your 90-day goal form yet. Your KPIs are using team defaults. <a href="/intake" style="color:var(--gold);font-weight:500">Fill it out now →</a>
+    </div>`:''}
+
     <div class="verdict ${onTrack?'ontrack':close?'close':'behind'}">
       <strong>${onTrack?'✅ You\'re on track.':close?'⚠️ Close — one push needed.':'🔴 Off track — here\'s what to fix.'}</strong>
       ${onTrack?'Keep doing exactly what you\'re doing. Your activity supports hitting your 90-day goal. Don\'t stop.':close?'You\'re close but not there. Find the red KPI below and fix that one thing first.':'Your current pace won\'t get you to your goal. Follow the map below. Hit these numbers daily and you\'ll get there.'}
     </div>
+
     <div class="map-card">
       <div class="map-title">📍 Your roadmap to $${g.income_goal.toLocaleString()}</div>
       <div class="map-row"><span class="map-lbl">Commission per closing</span><span class="map-val">$${gciPerClosing.toLocaleString()}</span></div>
       <div class="map-row"><span class="map-lbl">Closings needed</span><span class="map-val">${closingsNeeded}</span></div>
-      <div class="map-row"><span class="map-lbl">Appointments needed</span><span class="map-val">${apptsNeeded}</span></div>
-      <div class="map-row"><span class="map-lbl">Leads needed</span><span class="map-val">${leadsNeeded}</span></div>
+      <div class="map-row"><span class="map-lbl">Appointments needed (90 days)</span><span class="map-val">${apptsNeeded}</span></div>
+      <div class="map-row"><span class="map-lbl">Leads needed (90 days)</span><span class="map-val">${leadsNeeded}</span></div>
       <div class="map-row"><span class="map-lbl">At current pace — projected closings</span><span class="map-val gold">${projectedClosings}</span></div>
       <div class="map-row"><span class="map-lbl">At current pace — projected GCI</span><span class="map-val gold">$${projectedGCI.toLocaleString()}</span></div>
     </div>
-    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Daily activity KPIs</div>
+
+    <!-- Three-layer comparison -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><span class="card-title">Your personal daily targets</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px">
+        <div style="text-align:center;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Activity</div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Sonder minimum</div>
+        <div style="text-align:center;font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.05em">Your goal requires</div>
+      </div>
+      ${[
+        {label:'Calls/day',sonder:20,personal:personalCalls},
+        {label:'Conversations/day',sonder:5,personal:5},
+        {label:'Referrals asked/day',sonder:5,personal:5},
+        {label:'Appts/week',sonder:1,personal:g.personal_appts||1},
+        {label:'Follow-ups/day',sonder:5,personal:5},
+      ].map(r=>{
+        const gap=r.personal>r.sonder;
+        return`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center">
+          <div style="font-size:13px;color:var(--text)">${r.label}</div>
+          <div style="text-align:center;font-size:15px;font-weight:500;color:var(--muted)">${r.sonder}</div>
+          <div style="text-align:center;font-size:15px;font-weight:500;color:${gap?'var(--gold)':'var(--teal)'}">${r.personal}${gap?` <span style="font-size:10px">(+${r.personal-r.sonder})</span>`:''}</div>
+        </div>`;
+      }).join('')}
+      <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6">Gold numbers mean your personal goal requires more than the Sonder minimum. That's your real daily target.</div>
+    </div>
+
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">KPI status today</div>
     <div class="kpi-grid">
       ${[
-        {label:'Calls',val:s.calls,target:20,pct:callPct,unit:'today'},
+        {label:'Calls',val:s.calls,target:personalCalls,pct:callPct,unit:'today'},
         {label:'Conversations',val:s.convos,target:5,pct:convoPct,unit:'today'},
         {label:'Referrals asked',val:s.refs,target:5,pct:refPct,unit:'today'},
         {label:'Appointments set',val:s.appts,target:apptsNeeded,pct:apptPct,unit:'total'},
@@ -1143,6 +1175,7 @@ function renderKPI(idx){
           <div class="kpi-bar-wrap"><div class="kpi-bar" style="width:${k.pct}%;background:${k.pct>=90?'var(--teal)':k.pct>=60?'var(--amber)':'var(--red)'}"></div></div>
         </div>`).join('')}
     </div>
+
     <div class="card" style="margin-bottom:32px">
       <div class="card-header"><span class="card-title">Look</span></div>
       <div style="font-size:14px;color:var(--text);line-height:1.8">
@@ -1834,9 +1867,49 @@ async function loadBooksFromDb(){
   }
 }
 
+async function loadIntakeData(idx){
+  const a=agents[idx];
+  const{data}=await sb.from('agent_intake').select('*').eq('agent_name',a.name).order('submitted_at',{ascending:false}).limit(1).single();
+  if(data){
+    // Parse income goal — strip $ and commas
+    const rawIncome=parseFloat((data.income_goal||'25000').replace(/[$,]/g,''))||25000;
+    const rawAvgPrice=parseFloat((data.avg_sale_price||'500000').replace(/[$,]/g,''))||500000;
+    agentGoals[idx].income_goal=rawIncome;
+    agentGoals[idx].avg_sale_price=rawAvgPrice;
+    agentGoals[idx].closings_goal=data.closings_goal||2;
+    agentGoals[idx].hasIntake=true;
+    agentGoals[idx].lead_sources=data.lead_sources||'';
+    agentGoals[idx].database_size=data.database_size||0;
+    agentGoals[idx].top_goal=data.top_goal||'';
+    agentGoals[idx].biggest_obstacle=data.biggest_obstacle||'';
+
+    // Calculate personal daily minimums based on their real goal
+    const gciPerClosing=rawAvgPrice*0.025;
+    const closingsNeeded=Math.ceil(rawIncome/gciPerClosing);
+    const apptsNeeded=Math.ceil(closingsNeeded/0.5);
+    const leadsNeeded=Math.ceil(apptsNeeded/0.2);
+    // Industry data: need ~4 calls to reach 1 real conversation
+    // Need ~1 conversation per lead per week
+    const personalCallsNeeded=Math.max(20,Math.ceil(leadsNeeded/13*4)); // 13 weeks, 4 calls per lead
+    agentGoals[idx].personal_calls=personalCallsNeeded;
+    agentGoals[idx].personal_appts=Math.ceil(apptsNeeded/13); // per week
+  } else {
+    agentGoals[idx].hasIntake=false;
+    agentGoals[idx].personal_calls=20;
+    agentGoals[idx].personal_appts=1;
+  }
+}
+
+async function loadAllIntake(){
+  for(let i=0;i<agents.length;i++){
+    await loadIntakeData(i);
+  }
+}
+
 // Load all data on startup
 loadAllAgents();
 loadBooksFromDb();
+loadAllIntake();
 </script>
 </body>
 </html>
