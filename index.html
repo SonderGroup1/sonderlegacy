@@ -177,7 +177,36 @@ body.light .submit-btn{color:var(--navy);border-color:var(--navy)}
 .gbw{flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden}
 .gbf{height:100%;border-radius:99px}
 .gv{font-size:12px;color:var(--muted);min-width:72px;text-align:right}
-.qsend-btn{padding:9px 18px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.kpi-hero{background:var(--navy);border:1px solid rgba(201,168,76,.3);border-radius:14px;padding:24px;margin-bottom:16px;text-align:center}
+.kpi-hero-val{font-family:'DM Serif Display',serif;font-size:36px;color:var(--gold);margin-bottom:4px}
+.kpi-hero-label{font-size:13px;color:rgba(255,255,255,.7);line-height:1.6}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.kpi-card{border-radius:12px;padding:16px;border:1px solid var(--border)}
+.kpi-card.green{background:var(--teal-bg);border-color:var(--teal-dim)}
+.kpi-card.yellow{background:var(--amber-bg);border-color:var(--amber-dim)}
+.kpi-card.red{background:var(--red-bg);border-color:var(--red-dim)}
+.kpi-card.neutral{background:var(--surface);border-color:var(--border)}
+.kpi-status{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.kpi-card.green .kpi-status{color:var(--teal)}
+.kpi-card.yellow .kpi-status{color:var(--amber)}
+.kpi-card.red .kpi-status{color:var(--red)}
+.kpi-card.neutral .kpi-status{color:var(--muted)}
+.kpi-metric{font-size:22px;font-weight:500;color:var(--text);font-family:'DM Serif Display',serif;margin-bottom:2px}
+.kpi-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.kpi-bar-wrap{height:4px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:8px}
+.kpi-bar{height:100%;border-radius:99px;transition:width .5s}
+.map-card{background:var(--navy);border:1px solid rgba(201,168,76,.25);border-radius:14px;padding:20px;margin-bottom:16px}
+.map-title{font-size:13px;font-weight:500;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.map-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px}
+.map-row:last-child{border-bottom:none}
+.map-lbl{color:rgba(255,255,255,.6)}
+.map-val{color:#fff;font-weight:500}
+.map-val.gold{color:var(--gold)}
+.verdict{border-radius:12px;padding:18px;margin-bottom:16px;font-size:14px;line-height:1.7}
+.verdict.ontrack{background:var(--teal-bg);border:1px solid var(--teal-dim);color:var(--teal)}
+.verdict.close{background:var(--amber-bg);border:1px solid var(--amber-dim);color:var(--amber)}
+.verdict.behind{background:var(--red-bg);border:1px solid var(--red-dim);color:var(--red)}
+.verdict strong{display:block;font-size:15px;margin-bottom:4px}border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
 .qsend-btn:hover{border-color:var(--purple-dim);color:var(--text)}
 .qsend-btn.sel{background:var(--purple-bg);border-color:var(--purple-dim);color:var(--purple);font-weight:500}
 .q-item{padding:14px 0;border-bottom:1px solid var(--border)}
@@ -320,6 +349,8 @@ body.light .quote-bar{color:#fff}
       <button class="nav-item" onclick="switchView('buyer',this)">🏠 Buyer questionnaire</button>
       <button class="nav-item" onclick="switchView('seller',this)">📋 Seller questionnaire</button>
       <div class="nav-section">Plan</div>
+      <button class="nav-item" onclick="switchView('kpi',this)">📈 My KPI dashboard</button>
+      <button class="nav-item" onclick="switchView('kpiteam',this)">🏆 Team KPIs</button>
       <button class="nav-item" onclick="switchView('goals',this)">🎯 90-day goals</button>
       <button class="nav-item" onclick="switchView('reviews',this)">⭐ Reviews</button>
       <button class="nav-item" onclick="switchView('books',this)">📚 Books</button>
@@ -565,12 +596,12 @@ body.light .quote-bar{color:#fff}
           <div class="card-header"><span class="card-title">The math — per agent</span></div>
           <div class="mr"><span class="ml">Avg sale price</span><span class="mv">$500,000</span></div>
           <div class="mr"><span class="ml">Commission (2.5%)</span><span class="mv">$12,500 / closing</span></div>
-          <div class="mr"><span class="ml">GCI goal (90 days)</span><span class="mv">$15,000</span></div>
+          <div class="mr"><span class="ml">GCI goal (90 days)</span><span class="mv">$25,000</span></div>
           <div class="mr"><span class="ml">Closings needed</span><span class="mv">2</span></div>
           <div class="mr"><span class="ml">Contracts needed</span><span class="mv">3 (80% close rate)</span></div>
           <div class="mr"><span class="ml">Appointments needed</span><span class="mv">6 total</span></div>
           <div class="mr"><span class="ml">Leads needed</span><span class="mv">30 (20% convert)</span></div>
-          <div class="mr"><span class="ml">Team GCI goal</span><span class="mv ma">$75,000</span></div>
+          <div class="mr"><span class="ml">Team GCI goal</span><span class="mv ma">$125,000</span></div>
         </div>
         <div class="card">
           <div class="card-header"><span class="card-title">SOI follow-up cadence</span></div>
@@ -620,6 +651,21 @@ body.light .quote-bar{color:#fff}
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- KPI DASHBOARD — INDIVIDUAL -->
+    <div id="view-kpi" class="view">
+      <div class="page-title">My KPI dashboard</div>
+      <div class="page-sub">Your map. Follow it every day and you'll hit your goals.</div>
+      <div class="agent-selector" id="kpi-agent-selector"></div>
+      <div id="kpi-content"></div>
+    </div>
+
+    <!-- KPI DASHBOARD — TEAM -->
+    <div id="view-kpiteam" class="view">
+      <div class="page-title">Team KPI dashboard</div>
+      <div class="page-sub">Every agent's pace toward their 90-day goals.</div>
+      <div id="kpiteam-content"></div>
     </div>
 
     <!-- BUYER QUESTIONNAIRE -->
@@ -1042,6 +1088,111 @@ function renderSocial(){
 }
 
 function toggleCheck(idx,key){state[idx][key]=!state[idx][key];renderAgentView(idx);renderBroker();updateDots();saveAgentData(idx);}
+
+// ── KPI DASHBOARD ─────────────────────────────────────────────
+const agentGoals=agents.map(()=>({income_goal:25000,closings_goal:2,avg_sale_price:500000,commission_rate:0.025}));
+let kpiAgent=0;
+function kpiColor(pct){return pct>=90?'green':pct>=60?'yellow':'red';}
+
+function renderKPI(idx){
+  const a=agents[idx];const s=state[idx];const g=agentGoals[idx];
+  const el=document.getElementById('kpi-content');if(!el)return;
+  const gciPerClosing=g.avg_sale_price*g.commission_rate;
+  const closingsNeeded=Math.ceil(g.income_goal/gciPerClosing);
+  const apptsNeeded=Math.ceil(closingsNeeded/0.5);
+  const leadsNeeded=Math.ceil(apptsNeeded/0.2);
+  const callPct=Math.min(100,Math.round((s.calls/20)*100));
+  const convoPct=Math.min(100,Math.round((s.convos/5)*100));
+  const refPct=Math.min(100,Math.round((s.refs/5)*100));
+  const apptPct=Math.min(100,Math.round((s.appts/Math.max(apptsNeeded,1))*100));
+  const closingPct=Math.min(100,Math.round(((s.closings||0)/Math.max(closingsNeeded,1))*100));
+  const storyPct=s.story?100:0;
+  const activityScore=(callPct+convoPct+refPct)/300;
+  const projectedClosings=Math.round(activityScore*closingsNeeded*10)/10;
+  const projectedGCI=Math.round(projectedClosings*gciPerClosing);
+  const onTrack=activityScore>=0.9;const close=activityScore>=0.6&&activityScore<0.9;
+
+  el.innerHTML=`
+    <div class="verdict ${onTrack?'ontrack':close?'close':'behind'}">
+      <strong>${onTrack?'✅ You\'re on track.':close?'⚠️ Close — one push needed.':'🔴 Off track — here\'s what to fix.'}</strong>
+      ${onTrack?'Keep doing exactly what you\'re doing. Your activity supports hitting your 90-day goal. Don\'t stop.':close?'You\'re close but not there. Find the red KPI below and fix that one thing first.':'Your current pace won\'t get you to your goal. Follow the map below. Hit these numbers daily and you\'ll get there.'}
+    </div>
+    <div class="map-card">
+      <div class="map-title">📍 Your roadmap to $${g.income_goal.toLocaleString()}</div>
+      <div class="map-row"><span class="map-lbl">Commission per closing</span><span class="map-val">$${gciPerClosing.toLocaleString()}</span></div>
+      <div class="map-row"><span class="map-lbl">Closings needed</span><span class="map-val">${closingsNeeded}</span></div>
+      <div class="map-row"><span class="map-lbl">Appointments needed</span><span class="map-val">${apptsNeeded}</span></div>
+      <div class="map-row"><span class="map-lbl">Leads needed</span><span class="map-val">${leadsNeeded}</span></div>
+      <div class="map-row"><span class="map-lbl">At current pace — projected closings</span><span class="map-val gold">${projectedClosings}</span></div>
+      <div class="map-row"><span class="map-lbl">At current pace — projected GCI</span><span class="map-val gold">$${projectedGCI.toLocaleString()}</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Daily activity KPIs</div>
+    <div class="kpi-grid">
+      ${[
+        {label:'Calls',val:s.calls,target:20,pct:callPct,unit:'today'},
+        {label:'Conversations',val:s.convos,target:5,pct:convoPct,unit:'today'},
+        {label:'Referrals asked',val:s.refs,target:5,pct:refPct,unit:'today'},
+        {label:'Appointments set',val:s.appts,target:apptsNeeded,pct:apptPct,unit:'total'},
+        {label:'Closings',val:s.closings||0,target:closingsNeeded,pct:closingPct,unit:'total'},
+        {label:'Story posted',val:s.story?1:0,target:1,pct:storyPct,unit:'today'},
+      ].map(k=>`
+        <div class="kpi-card ${kpiColor(k.pct)}">
+          <div class="kpi-status">${k.pct>=90?'✓ On track':k.pct>=60?'↑ Getting there':'✗ Needs focus'}</div>
+          <div class="kpi-metric">${k.label==='Story posted'?(k.val?'Done':'Not yet'):k.val+' / '+k.target}</div>
+          <div class="kpi-desc">${k.label} — ${k.unit}</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar" style="width:${k.pct}%;background:${k.pct>=90?'var(--teal)':k.pct>=60?'var(--amber)':'var(--red)'}"></div></div>
+        </div>`).join('')}
+    </div>
+    <div class="card" style="margin-bottom:32px">
+      <div class="card-header"><span class="card-title">Look</span></div>
+      <div style="font-size:14px;color:var(--text);line-height:1.8">
+        This is the <strong>absolute minimum.</strong> If you're doing the work consistently, you should be closing more than this.<br><br>
+        Not hitting your numbers? <strong>Meet with Kevin and Steven.</strong>
+      </div>
+    </div>`;
+}
+
+function renderKPITeam(){
+  const el=document.getElementById('kpiteam-content');if(!el)return;
+  el.innerHTML=agents.map((a,i)=>{
+    const s=state[i];const g=agentGoals[i];
+    const gciPerClosing=g.avg_sale_price*g.commission_rate;
+    const closingsNeeded=Math.ceil(g.income_goal/gciPerClosing);
+    const callPct=Math.min(100,Math.round((s.calls/20)*100));
+    const convoPct=Math.min(100,Math.round((s.convos/5)*100));
+    const refPct=Math.min(100,Math.round((s.refs/5)*100));
+    const activityScore=Math.round((callPct+convoPct+refPct)/3);
+    const projClosings=Math.round((activityScore/100)*closingsNeeded*10)/10;
+    const color=kpiColor(activityScore);
+    return`<div class="card" style="margin-bottom:12px">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="av" style="background:${a.bg};color:${a.color};width:36px;height:36px;font-size:12px">${a.initials}</div>
+          <div style="font-size:15px;font-weight:500;color:var(--text)">${a.name}</div>
+        </div>
+        <span class="badge ${color==='green'?'b-fire':color==='yellow'?'b-push':'b-behind'}">${color==='green'?'On track':color==='yellow'?'Close':'Behind'}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+        ${[{l:'Calls',v:s.calls,t:20},{l:'Convos',v:s.convos,t:5},{l:'Referrals',v:s.refs,t:5},{l:'Activity',v:activityScore+'%',t:null}]
+          .map(k=>`<div style="text-align:center;background:var(--surface2);border-radius:8px;padding:8px">
+            <div style="font-size:16px;font-weight:500;color:${k.t&&k.v>=k.t?'var(--teal)':'var(--text)'}">${k.v}${k.t?'/'+k.t:''}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">${k.l}</div>
+          </div>`).join('')}
+      </div>
+      <div style="font-size:13px;color:var(--muted)">At current pace → projected <strong style="color:var(--text)">${projClosings} closings</strong> of ${closingsNeeded} needed</div>
+      <div class="kpi-bar-wrap" style="margin-top:8px"><div class="kpi-bar" style="width:${activityScore}%;background:${color==='green'?'var(--teal)':color==='yellow'?'var(--amber)':'var(--red)'}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function initKPISelector(){
+  const sel=document.getElementById('kpi-agent-selector');if(!sel)return;
+  sel.innerHTML=agents.map((a,i)=>`
+    <div class="agent-pill${i===kpiAgent?' active':''}" onclick="kpiAgent=${i};document.querySelectorAll('#kpi-agent-selector .agent-pill').forEach((p,j)=>p.classList.toggle('active',j===${i}));renderKPI(${i})">
+      <div class="pip" style="background:${a.color}"></div>${a.name}
+    </div>`).join('');
+  renderKPI(kpiAgent);
+}
 function toggleStory(idx){state[idx].story=!state[idx].story;renderBroker();renderSocial();if(currentAgent===idx)renderAgentView(idx);updateDots();saveAgentData(idx);}
 function toggleWeekPost(idx){state[idx].weekPost=!state[idx].weekPost;renderSocial();}
 function upd(idx,key,val){state[idx][key]=Math.max(0,val||0);renderBroker();renderAgentView(idx);updateDots();saveAgentData(idx);}
@@ -1177,6 +1328,8 @@ function switchView(v,btn){
   if(v==='seller')renderQuestionnaire('seller');
   if(v==='reviews')renderReviewTracker();
   if(v==='books')renderBooks();
+  if(v==='kpi')initKPISelector();
+  if(v==='kpiteam')renderKPITeam();
 }
 
 const buyerQs=[
