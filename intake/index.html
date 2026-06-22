@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sonder Group — 90-Day Goal Intake</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#0f2557;min-height:100vh;padding:0 0 60px}
+
+.header{background:#0f2557;padding:32px 24px 24px;text-align:center;border-bottom:1px solid rgba(255,255,255,.1)}
+.header-brand{font-family:'DM Serif Display',serif;font-size:22px;color:#fff;letter-spacing:.06em;margin-bottom:4px}
+.header-sub{font-size:12px;color:#c9a84c;text-transform:uppercase;letter-spacing:.12em}
+.header-title{font-family:'DM Serif Display',serif;font-size:28px;color:#fff;margin-top:16px;margin-bottom:6px}
+.header-desc{font-size:14px;color:rgba(255,255,255,.6);max-width:400px;margin:0 auto;line-height:1.6}
+
+.form-wrap{max-width:560px;margin:0 auto;padding:24px 20px}
+
+.section-title{font-size:11px;font-weight:600;color:#c9a84c;text-transform:uppercase;letter-spacing:.1em;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.1)}
+
+.field{margin-bottom:18px}
+.field label{display:block;font-size:14px;font-weight:500;color:#fff;margin-bottom:8px;line-height:1.4}
+.field input,.field select,.field textarea{width:100%;padding:13px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.field input::placeholder,.field textarea::placeholder{color:rgba(255,255,255,.3)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#c9a84c}
+.field select option{background:#0f2557;color:#fff}
+.field textarea{resize:vertical;min-height:90px;line-height:1.6}
+
+.agent-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.agent-btn{padding:13px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;text-align:center}
+.agent-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+.agent-btn.sel{background:rgba(201,168,76,.2);border-color:#c9a84c;color:#fff}
+
+.submit-btn{width:100%;padding:16px;border-radius:12px;border:none;background:#c9a84c;color:#0f2557;font-size:16px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:28px;transition:all .15s}
+.submit-btn:hover{background:#e0bb5a}
+.submit-btn:disabled{opacity:.5;cursor:default}
+
+.success-screen{display:none;text-align:center;padding:48px 24px}
+.success-icon{font-size:56px;margin-bottom:16px}
+.success-title{font-family:'DM Serif Display',serif;font-size:28px;color:#fff;margin-bottom:8px}
+.success-sub{font-size:15px;color:rgba(255,255,255,.6);line-height:1.6}
+
+.error-msg{font-size:13px;color:#f87171;margin-top:6px;display:none}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">SONDER GROUP</div>
+  <div class="header-sub">CRM</div>
+  <div class="header-title">90-Day Goal Intake</div>
+  <div class="header-desc">Fill this out honestly. Your answers build your personal business plan.</div>
+</div>
+
+<div class="form-wrap">
+  <div id="form-content">
+
+    <div class="section-title">Who are you?</div>
+    <div class="field">
+      <label>Select your name</label>
+      <div class="agent-btns" id="agent-btns">
+        <div class="agent-btn" onclick="selectAgent('Kevin',this)">Kevin</div>
+        <div class="agent-btn" onclick="selectAgent('Steven',this)">Steven</div>
+        <div class="agent-btn" onclick="selectAgent('Chris',this)">Chris</div>
+        <div class="agent-btn" onclick="selectAgent('Logan',this)">Logan</div>
+        <div class="agent-btn" onclick="selectAgent('Pepper',this)">Pepper</div>
+      </div>
+    </div>
+
+    <div class="section-title">Income & Production Goals</div>
+    <div class="field">
+      <label>What is your income goal for the next 90 days?</label>
+      <input type="text" id="income_goal" placeholder="e.g. $25,000">
+    </div>
+    <div class="field">
+      <label>How many transactions do you want to close in the next 90 days?</label>
+      <input type="number" id="closings_goal" placeholder="e.g. 3" min="0">
+    </div>
+    <div class="field">
+      <label>What is your average sale price in your market?</label>
+      <input type="text" id="avg_sale_price" placeholder="e.g. $500,000">
+    </div>
+
+    <div class="section-title">Lead Generation</div>
+    <div class="field">
+      <label>How many leads are you generating per week right now?</label>
+      <input type="number" id="leads_per_week" placeholder="e.g. 5" min="0">
+    </div>
+    <div class="field">
+      <label>How many outbound calls are you making per day currently?</label>
+      <input type="number" id="calls_per_day" placeholder="e.g. 10" min="0">
+    </div>
+    <div class="field">
+      <label>What are your top 2-3 lead sources?</label>
+      <input type="text" id="lead_sources" placeholder="e.g. SOI, referrals, open houses">
+    </div>
+
+    <div class="section-title">Your Database</div>
+    <div class="field">
+      <label>How many people are in your database / sphere of influence?</label>
+      <input type="number" id="database_size" placeholder="e.g. 150" min="0">
+    </div>
+    <div class="field">
+      <label>How often are you currently touching your database?</label>
+      <select id="database_touch">
+        <option value="" disabled selected>Select frequency</option>
+        <option value="Daily">Daily</option>
+        <option value="Several times a week">Several times a week</option>
+        <option value="Weekly">Weekly</option>
+        <option value="Monthly">Monthly</option>
+        <option value="Rarely">Rarely — need to fix this</option>
+      </select>
+    </div>
+
+    <div class="section-title">Current Pipeline</div>
+    <div class="field">
+      <label>How many active listings do you have right now?</label>
+      <input type="number" id="active_listings" placeholder="e.g. 2" min="0">
+    </div>
+    <div class="field">
+      <label>How many active buyers are you working with right now?</label>
+      <input type="number" id="active_buyers" placeholder="e.g. 3" min="0">
+    </div>
+
+    <div class="section-title">Accountability</div>
+    <div class="field">
+      <label>What is your #1 goal to accomplish in the next 90 days?</label>
+      <textarea id="top_goal" placeholder="Be specific — what does winning look like for you?"></textarea>
+    </div>
+    <div class="field">
+      <label>What is the biggest thing standing in your way right now?</label>
+      <textarea id="biggest_obstacle" placeholder="Be honest — this helps us help you."></textarea>
+    </div>
+    <div class="field">
+      <label>What does massive success look like for you in 90 days?</label>
+      <textarea id="success_vision" placeholder="Paint the picture — personal, financial, professional."></textarea>
+    </div>
+
+    <div class="error-msg" id="error-msg">Please fill out all fields and select your name.</div>
+    <button class="submit-btn" onclick="submitForm()">Submit my 90-day intake ✓</button>
+
+  </div>
+
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">🎯</div>
+    <div class="success-title">You're locked in.</div>
+    <div class="success-sub">Your 90-day intake has been submitted. Kevin will build your personalized business plan based on your answers.<br><br>Now go make some calls.</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='https://kctyueybsgkmorfcmodm.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjdHl1ZXlic2drbW9yZmNtb2RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5OTM5MzgsImV4cCI6MjA5NTU2OTkzOH0.iIsnXSc1AvNMxHd9138gv8u49dP8oNG5miNUEIhWbOs';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let selectedAgent=null;
+
+function selectAgent(name,el){
+  selectedAgent=name;
+  document.querySelectorAll('.agent-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+async function submitForm(){
+  const btn=document.querySelector('.submit-btn');
+  const errEl=document.getElementById('error-msg');
+  errEl.style.display='none';
+
+  const fields={
+    agent_name:selectedAgent,
+    income_goal:document.getElementById('income_goal').value.trim(),
+    closings_goal:document.getElementById('closings_goal').value,
+    avg_sale_price:document.getElementById('avg_sale_price').value.trim(),
+    leads_per_week:document.getElementById('leads_per_week').value,
+    calls_per_day:document.getElementById('calls_per_day').value,
+    lead_sources:document.getElementById('lead_sources').value.trim(),
+    database_size:document.getElementById('database_size').value,
+    database_touch:document.getElementById('database_touch').value,
+    active_listings:document.getElementById('active_listings').value,
+    active_buyers:document.getElementById('active_buyers').value,
+    top_goal:document.getElementById('top_goal').value.trim(),
+    biggest_obstacle:document.getElementById('biggest_obstacle').value.trim(),
+    success_vision:document.getElementById('success_vision').value.trim(),
+    submitted_at:new Date().toISOString()
+  };
+
+  if(!fields.agent_name||!fields.income_goal||!fields.top_goal||!fields.biggest_obstacle){
+    errEl.style.display='block';
+    return;
+  }
+
+  btn.disabled=true;
+  btn.textContent='Submitting...';
+
+  const{error}=await sb.from('agent_intake').insert([fields]);
+
+  if(error){
+    btn.disabled=false;
+    btn.textContent='Submit my 90-day intake ✓';
+    errEl.textContent='Something went wrong. Please try again.';
+    errEl.style.display='block';
+    return;
+  }
+
+  document.getElementById('form-content').style.display='none';
+  document.getElementById('success-screen').style.display='block';
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
