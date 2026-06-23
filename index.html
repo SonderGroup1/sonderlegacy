@@ -1886,13 +1886,15 @@ async function loadIntakeData(idx){
     // Calculate personal daily minimums based on their real goal
     const gciPerClosing=rawAvgPrice*0.025;
     const closingsNeeded=Math.ceil(rawIncome/gciPerClosing);
-    const apptsNeeded=Math.ceil(closingsNeeded/0.5);
-    const leadsNeeded=Math.ceil(apptsNeeded/0.2);
-    // Industry data: need ~4 calls to reach 1 real conversation
-    // Need ~1 conversation per lead per week
-    const personalCallsNeeded=Math.max(20,Math.ceil(leadsNeeded/13*4)); // 13 weeks, 4 calls per lead
-    agentGoals[idx].personal_calls=personalCallsNeeded;
-    agentGoals[idx].personal_appts=Math.ceil(apptsNeeded/13); // per week
+    const apptsNeeded=Math.ceil(closingsNeeded/0.5); // 50% appt->contract rate
+    const leadsNeeded=Math.ceil(apptsNeeded/0.2); // 20% lead->appt rate
+    // Industry data: ~10 calls to reach 1 qualified lead, spread over 90 days
+    const totalCallsNeeded=leadsNeeded*10;
+    const personalCallsPerDay=Math.max(20,Math.ceil(totalCallsNeeded/90));
+    // Appointments per week
+    const personalApptsPerWeek=Math.max(1,Math.ceil(apptsNeeded/13));
+    agentGoals[idx].personal_calls=personalCallsPerDay;
+    agentGoals[idx].personal_appts=personalApptsPerWeek;
   } else {
     agentGoals[idx].hasIntake=false;
     agentGoals[idx].personal_calls=20;
