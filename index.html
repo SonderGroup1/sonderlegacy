@@ -1224,7 +1224,12 @@ function initKPISelector(){
     <div class="agent-pill${i===kpiAgent?' active':''}" onclick="kpiAgent=${i};document.querySelectorAll('#kpi-agent-selector .agent-pill').forEach((p,j)=>p.classList.toggle('active',j===${i}));loadIntakeData(${i}).then(()=>renderKPI(${i}))">
       <div class="pip" style="background:${a.color}"></div>${a.name}
     </div>`).join('');
-  loadIntakeData(kpiAgent).then(()=>renderKPI(kpiAgent));
+  // Render immediately with defaults, then re-render once intake loads
+  renderKPI(kpiAgent);
+  loadIntakeData(kpiAgent).then(()=>{
+    console.log('Intake loaded, personal_calls=',agentGoals[kpiAgent].personal_calls);
+    renderKPI(kpiAgent);
+  });
 }
 function toggleStory(idx){state[idx].story=!state[idx].story;renderBroker();renderSocial();if(currentAgent===idx)renderAgentView(idx);updateDots();saveAgentData(idx);}
 function toggleWeekPost(idx){state[idx].weekPost=!state[idx].weekPost;renderSocial();}
