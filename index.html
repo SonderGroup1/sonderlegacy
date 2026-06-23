@@ -1896,15 +1896,8 @@ async function loadIntakeData(idx){
     agentGoals[idx].database_size=row.database_size||0;
     agentGoals[idx].top_goal=row.top_goal||'';
     agentGoals[idx].biggest_obstacle=row.biggest_obstacle||'';
-    const gciPerClosing=rawAvgPrice*0.025;
-    const closingsNeeded=Math.ceil(rawIncome/gciPerClosing);
-    const apptsNeeded=Math.ceil(closingsNeeded/0.5);
-    const leadsNeeded=Math.ceil(apptsNeeded/0.2);
-    const totalCallsNeeded=leadsNeeded*10;
-    const personalCallsPerDay=Math.max(20,Math.ceil(totalCallsNeeded/90));
-    const personalApptsPerWeek=Math.max(1,Math.ceil(apptsNeeded/13));
     agentGoals[idx].personal_calls=personalCallsPerDay;
-    agentGoals[idx].personal_appts=personalApptsPerWeek;
+    agentGoals[idx].personal_appts=Math.max(1,Math.ceil(apptsNeeded/13));
   } else {
     agentGoals[idx].hasIntake=false;
     agentGoals[idx].personal_calls=20;
