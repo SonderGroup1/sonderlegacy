@@ -1869,7 +1869,8 @@ async function loadBooksFromDb(){
 
 async function loadIntakeData(idx){
   const a=agents[idx];
-  const{data}=await sb.from('agent_intake').select('*').eq('agent_name',a.name).order('submitted_at',{ascending:false}).limit(1);
+  const{data,error}=await sb.from('agent_intake').select('*').eq('agent_name',a.name).order('submitted_at',{ascending:false}).limit(1);
+  console.log('Intake for',a.name,'data:',data,'error:',error);
   const row=data&&data.length>0?data[0]:null;
   if(row){
     const rawIncome=parseFloat((row.income_goal||'25000').replace(/[$,]/g,''))||25000;
