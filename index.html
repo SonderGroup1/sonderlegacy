@@ -1885,7 +1885,7 @@ async function loadIntakeData(idx){
     const closingsNeeded=Math.ceil(rawIncome/gciPerClosing);
     const apptsNeeded=Math.ceil(closingsNeeded/0.5);
     const leadsNeeded=Math.ceil(apptsNeeded/0.2);
-    const totalCallsNeeded=leadsNeeded*10;
+    const totalCallsNeeded=leadsNeeded*60; // Industry: ~60 dials to generate 1 qualified lead
     const personalCallsPerDay=Math.max(20,Math.ceil(totalCallsNeeded/90));
     console.log('closings:',closingsNeeded,'appts:',apptsNeeded,'leads:',leadsNeeded,'calls/day:',personalCallsPerDay);
     agentGoals[idx].income_goal=rawIncome;
