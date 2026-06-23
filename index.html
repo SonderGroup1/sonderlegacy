@@ -1869,29 +1869,25 @@ async function loadBooksFromDb(){
 
 async function loadIntakeData(idx){
   const a=agents[idx];
-  const{data}=await sb.from('agent_intake').select('*').eq('agent_name',a.name).order('submitted_at',{ascending:false}).limit(1).single();
-  if(data){
-    // Parse income goal — strip $ and commas
-    const rawIncome=parseFloat((data.income_goal||'25000').replace(/[$,]/g,''))||25000;
-    const rawAvgPrice=parseFloat((data.avg_sale_price||'500000').replace(/[$,]/g,''))||500000;
+  const{data}=await sb.from('agent_intake').select('*').eq('agent_name',a.name).order('submitted_at',{ascending:false}).limit(1);
+  const row=data&&data.length>0?data[0]:null;
+  if(row){
+    const rawIncome=parseFloat((row.income_goal||'25000').replace(/[$,]/g,''))||25000;
+    const rawAvgPrice=parseFloat((row.avg_sale_price||'500000').replace(/[$,]/g,''))||500000;
     agentGoals[idx].income_goal=rawIncome;
     agentGoals[idx].avg_sale_price=rawAvgPrice;
-    agentGoals[idx].closings_goal=data.closings_goal||2;
+    agentGoals[idx].closings_goal=row.closings_goal||2;
     agentGoals[idx].hasIntake=true;
-    agentGoals[idx].lead_sources=data.lead_sources||'';
-    agentGoals[idx].database_size=data.database_size||0;
-    agentGoals[idx].top_goal=data.top_goal||'';
-    agentGoals[idx].biggest_obstacle=data.biggest_obstacle||'';
-
-    // Calculate personal daily minimums based on their real goal
+    agentGoals[idx].lead_sources=row.lead_sources||'';
+    agentGoals[idx].database_size=row.database_size||0;
+    agentGoals[idx].top_goal=row.top_goal||'';
+    agentGoals[idx].biggest_obstacle=row.biggest_obstacle||'';
     const gciPerClosing=rawAvgPrice*0.025;
     const closingsNeeded=Math.ceil(rawIncome/gciPerClosing);
-    const apptsNeeded=Math.ceil(closingsNeeded/0.5); // 50% appt->contract rate
-    const leadsNeeded=Math.ceil(apptsNeeded/0.2); // 20% lead->appt rate
-    // Industry data: ~10 calls to reach 1 qualified lead, spread over 90 days
+    const apptsNeeded=Math.ceil(closingsNeeded/0.5);
+    const leadsNeeded=Math.ceil(apptsNeeded/0.2);
     const totalCallsNeeded=leadsNeeded*10;
     const personalCallsPerDay=Math.max(20,Math.ceil(totalCallsNeeded/90));
-    // Appointments per week
     const personalApptsPerWeek=Math.max(1,Math.ceil(apptsNeeded/13));
     agentGoals[idx].personal_calls=personalCallsPerDay;
     agentGoals[idx].personal_appts=personalApptsPerWeek;
