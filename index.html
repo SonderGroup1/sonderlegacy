@@ -1880,6 +1880,14 @@ async function loadIntakeData(idx){
   if(row){
     const rawIncome=parseFloat((row.income_goal||'25000').replace(/[$,]/g,''))||25000;
     const rawAvgPrice=parseFloat((row.avg_sale_price||'500000').replace(/[$,]/g,''))||500000;
+    console.log('rawIncome:',rawIncome,'rawAvgPrice:',rawAvgPrice);
+    const gciPerClosing=rawAvgPrice*0.025;
+    const closingsNeeded=Math.ceil(rawIncome/gciPerClosing);
+    const apptsNeeded=Math.ceil(closingsNeeded/0.5);
+    const leadsNeeded=Math.ceil(apptsNeeded/0.2);
+    const totalCallsNeeded=leadsNeeded*10;
+    const personalCallsPerDay=Math.max(20,Math.ceil(totalCallsNeeded/90));
+    console.log('closings:',closingsNeeded,'appts:',apptsNeeded,'leads:',leadsNeeded,'calls/day:',personalCallsPerDay);
     agentGoals[idx].income_goal=rawIncome;
     agentGoals[idx].avg_sale_price=rawAvgPrice;
     agentGoals[idx].closings_goal=row.closings_goal||2;
