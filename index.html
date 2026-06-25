@@ -1099,8 +1099,10 @@ function renderKPI(idx){
   const el=document.getElementById('kpi-content');if(!el)return;
   const gciPerClosing=g.avg_sale_price*g.commission_rate;
   const closingsNeeded=Math.ceil(g.income_goal/gciPerClosing);
-  const apptsNeeded=Math.ceil(closingsNeeded/0.5);
-  const leadsNeeded=Math.ceil(apptsNeeded/0.2);
+  const signedsNeeded=Math.ceil(closingsNeeded/0.82);
+  const apptsNeeded=Math.ceil(signedsNeeded/0.60);
+  const contactsNeeded=apptsNeeded*60;
+  const totalDialsNeeded=contactsNeeded*6;
   const personalCalls=g.personal_calls||20;
   const callPct=Math.min(100,Math.round((s.calls/personalCalls)*100));
   const convoPct=Math.min(100,Math.round((s.convos/5)*100));
@@ -1127,8 +1129,10 @@ function renderKPI(idx){
       <div class="map-title">📍 Your roadmap to $${g.income_goal.toLocaleString()}</div>
       <div class="map-row"><span class="map-lbl">Commission per closing</span><span class="map-val">$${gciPerClosing.toLocaleString()}</span></div>
       <div class="map-row"><span class="map-lbl">Closings needed</span><span class="map-val">${closingsNeeded}</span></div>
+      <div class="map-row"><span class="map-lbl">Signed clients needed</span><span class="map-val">${signedsNeeded}</span></div>
       <div class="map-row"><span class="map-lbl">Appointments needed (90 days)</span><span class="map-val">${apptsNeeded}</span></div>
-      <div class="map-row"><span class="map-lbl">Leads needed (90 days)</span><span class="map-val">${leadsNeeded}</span></div>
+      <div class="map-row"><span class="map-lbl">Contacts needed (90 days)</span><span class="map-val">${contactsNeeded.toLocaleString()}</span></div>
+      <div class="map-row"><span class="map-lbl">Total dials needed (90 days)</span><span class="map-val">${totalDialsNeeded.toLocaleString()}</span></div>
       <div class="map-row"><span class="map-lbl">At current pace — projected closings</span><span class="map-val gold">${projectedClosings}</span></div>
       <div class="map-row"><span class="map-lbl">At current pace — projected GCI</span><span class="map-val gold">$${projectedGCI.toLocaleString()}</span></div>
     </div>
@@ -1155,7 +1159,7 @@ function renderKPI(idx){
           <div style="text-align:center;font-size:15px;font-weight:500;color:${gap?'var(--gold)':'var(--teal)'}">${r.personal}${gap?` <span style="font-size:10px">(+${r.personal-r.sonder})</span>`:''}</div>
         </div>`;
       }).join('')}
-      <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6">Gold numbers mean your personal goal requires more than the Sonder minimum. That's your real daily target.</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6">Gold numbers mean your personal goal requires more than the Sonder minimum. That's your real daily target.<br><span style="font-size:11px;opacity:.7">Benchmarks based on Tom Ferry coaching methodology. Ferry's model is primarily built around warm SOI and referral-based prospecting — agents working cold lists, door knocking, or expireds may need higher volume to hit the same results.</span></div>
     </div>
 
     <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">KPI status today</div>
@@ -1226,10 +1230,7 @@ function initKPISelector(){
     </div>`).join('');
   // Render immediately with defaults, then re-render once intake loads
   renderKPI(kpiAgent);
-  loadIntakeData(kpiAgent).then(()=>{
-    console.log('Intake loaded, personal_calls=',agentGoals[kpiAgent].personal_calls);
-    renderKPI(kpiAgent);
-  });
+  loadIntakeData(kpiAgent).then(()=>renderKPI(kpiAgent));
 }
 function toggleStory(idx){state[idx].story=!state[idx].story;renderBroker();renderSocial();if(currentAgent===idx)renderAgentView(idx);updateDots();saveAgentData(idx);}
 function toggleWeekPost(idx){state[idx].weekPost=!state[idx].weekPost;renderSocial();}
@@ -1875,19 +1876,19 @@ async function loadBooksFromDb(){
 async function loadIntakeData(idx){
   const a=agents[idx];
   const{data,error}=await sb.from('agent_intake').select('*').eq('agent_name',a.name).order('submitted_at',{ascending:false}).limit(1);
-  console.log('Intake for',a.name,'data:',data,'error:',error);
   const row=data&&data.length>0?data[0]:null;
   if(row){
     const rawIncome=parseFloat((row.income_goal||'25000').replace(/[$,]/g,''))||25000;
     const rawAvgPrice=parseFloat((row.avg_sale_price||'500000').replace(/[$,]/g,''))||500000;
-    console.log('rawIncome:',rawIncome,'rawAvgPrice:',rawAvgPrice);
     const gciPerClosing=rawAvgPrice*0.025;
     const closingsNeeded=Math.ceil(rawIncome/gciPerClosing);
-    const apptsNeeded=Math.ceil(closingsNeeded/0.5);
-    const leadsNeeded=Math.ceil(apptsNeeded/0.2);
-    const totalCallsNeeded=leadsNeeded*60; // Industry: ~60 dials to generate 1 qualified lead
-    const personalCallsPerDay=Math.max(20,Math.ceil(totalCallsNeeded/90));
-    console.log('closings:',closingsNeeded,'appts:',apptsNeeded,'leads:',leadsNeeded,'calls/day:',personalCallsPerDay);
+    // Conservative blended ratios: SOI + door knocking + cold outreach
+    const signedsNeeded=Math.ceil(closingsNeeded/0.82); // 82% signed->close
+    const apptsNeeded=Math.ceil(signedsNeeded/0.60); // 60% appt->signed
+    const contactsNeeded=apptsNeeded*60; // 60 contacts per appointment
+    const totalDialsNeeded=contactsNeeded*6; // 6 dials per contact
+    const personalCallsPerDay=Math.max(20,Math.ceil(totalDialsNeeded/90));
+    const personalApptsPerWeek=Math.max(1,Math.ceil(apptsNeeded/13));
     agentGoals[idx].income_goal=rawIncome;
     agentGoals[idx].avg_sale_price=rawAvgPrice;
     agentGoals[idx].closings_goal=row.closings_goal||2;
