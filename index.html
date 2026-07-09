@@ -55,8 +55,57 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 body.light .toggle-track{background:var(--navy)}
 body.light .toggle-thumb{transform:translateX(12px)}
 .app{display:flex;min-height:100vh}
-.sidebar{width:230px;background:var(--navy);border-right:1px solid rgba(255,255,255,.08);padding:24px 0;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
-.main{flex:1;padding:32px;overflow-y:auto}
+.sidebar{width:230px;background:var(--navy);border-right:1px solid rgba(255,255,255,.08);padding:24px 0;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;transition:transform .25s ease}
+.main{flex:1;padding:32px;overflow-y:auto;min-width:0}
+
+/* Mobile hamburger + overlay */
+.mobile-topbar{display:none}
+.sidebar-overlay{display:none}
+
+@media (max-width:860px){
+  .app{position:relative}
+  .mobile-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--navy);position:sticky;top:0;z-index:50;border-bottom:1px solid rgba(255,255,255,.08)}
+  .mobile-topbar-brand{font-family:'DM Serif Display',serif;font-size:16px;color:#fff;letter-spacing:.05em}
+  .hamburger-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;flex-shrink:0}
+  .hamburger-btn span{display:block;width:18px;height:2px;background:#fff;position:relative}
+  .hamburger-btn span::before,.hamburger-btn span::after{content:'';position:absolute;width:18px;height:2px;background:#fff;left:0}
+  .hamburger-btn span::before{top:-6px}
+  .hamburger-btn span::after{top:6px}
+  .sidebar{position:fixed;left:0;top:0;height:100vh;z-index:100;transform:translateX(-100%);width:270px;box-shadow:4px 0 24px rgba(0,0,0,.4)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90}
+  .sidebar-overlay.show{display:block}
+  .main{padding:16px}
+  .app{flex-direction:column}
+}
+
+@media (max-width:600px){
+  .page-title{font-size:22px !important}
+  .card{padding:16px !important}
+  .kpi-grid{grid-template-columns:1fr !important}
+  .three-col,.agent-btns{grid-template-columns:1fr 1fr !important}
+  .num-pad{max-width:280px !important}
+  input,select,textarea{font-size:16px !important} /* prevents iOS zoom on focus */
+  .map-row{flex-direction:column;align-items:flex-start !important;gap:2px}
+  .map-val{font-size:16px !important}
+  .stat-grid{grid-template-columns:repeat(2,1fr) !important}
+  .tgrid{grid-template-columns:repeat(2,1fr) !important}
+  .agent-selector{overflow-x:auto;flex-wrap:nowrap !important;padding-bottom:6px}
+  .agent-pill{flex-shrink:0}
+  .login-card{padding:24px !important;margin:0 16px}
+  table{font-size:12px}
+  .broker-table{overflow-x:auto;display:block}
+}
+
+@media (max-width:480px){
+  .stat-grid,.tgrid{grid-template-columns:1fr 1fr !important}
+  .agent-btns{grid-template-columns:1fr 1fr !important}
+  #view-kpi [style*="grid-template-columns:1fr 1fr 1fr"],
+  #view-kpiteam [style*="grid-template-columns:1fr 1fr 1fr"],
+  #view-contactsort [style*="grid-template-columns:1fr 1fr 1fr"]{
+    grid-template-columns:1fr 1fr !important
+  }
+}
 .brand{padding:0 20px 24px;border-bottom:1px solid rgba(255,255,255,.1)}
 .brand-logo{display:flex;align-items:center;gap:12px;margin-bottom:6px}
 .brand-img{width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
@@ -332,7 +381,13 @@ body.light .quote-bar{color:#fff}
 </div>
 
 <div class="app" id="main-app" style="display:none">
-  <div class="sidebar">
+  <div class="mobile-topbar">
+    <div class="hamburger-btn" onclick="toggleSidebar()"><span></span></div>
+    <div class="mobile-topbar-brand">SONDER GROUP</div>
+    <div style="width:38px"></div>
+  </div>
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar" id="sidebar">
     <div class="brand">
       <div style="padding:4px 0 8px">
         <div style="font-family:'DM Serif Display',serif;font-size:18px;color:#fff;letter-spacing:.06em;font-weight:400;line-height:1.2">SONDER GROUP</div>
@@ -1808,6 +1863,19 @@ function switchView(v,btn){
   if(v==='kpi')initKPISelector();
   if(v==='kpiteam')renderKPITeam();
   if(v==='calendar')renderCalendar();
+  // Close mobile sidebar after navigating
+  if(window.innerWidth<=860)closeSidebar();
+  window.scrollTo(0,0);
+  document.querySelector('.main').scrollTo(0,0);
+}
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
 }
 
 const buyerQs=[
