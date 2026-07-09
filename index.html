@@ -818,8 +818,11 @@ body.light .quote-bar{color:#fff}
                 <div style="font-size:13px;font-weight:500;color:var(--red)">Hot</div>
               </button>
             </div>
-            <button onclick="tagContact('closed')" style="width:100%;background:var(--teal-bg);border:1px solid var(--teal-dim);border-radius:12px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px">
+            <button onclick="tagContact('closed')" style="width:100%;background:var(--teal-bg);border:1px solid var(--teal-dim);border-radius:12px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">
               <span style="font-size:16px">✅</span> <span style="font-size:13px;font-weight:500;color:var(--teal)">Closed — stay in touch</span>
+            </button>
+            <button onclick="tagContact('trash')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px">
+              <span style="font-size:15px">💩</span> <span style="font-size:12px;font-weight:500;color:var(--muted)">Never reaching out to this person</span>
             </button>
 
             <button class="nav-item" style="width:100%" onclick="skipContact()">Skip this contact →</button>
@@ -1696,7 +1699,7 @@ Be specific with numbers. Don't sugarcoat. Don't be mean. No emojis anywhere.`;
 
 let csContacts=[];
 let csIndex=0;
-let csCounts={cold:0,warm:0,hot:0,closed:0};
+let csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
 let csCurrentAgent=null;
 
 const TOUCH_CADENCE={hot:3,warm:7,cold:30,closed:90}; // days
@@ -1705,6 +1708,7 @@ const TEMP_META={
   warm:{icon:'🌤️',color:'var(--amber)',bg:'var(--amber-bg)',dim:'var(--amber-dim)',label:'Warm'},
   cold:{icon:'🧊',color:'var(--blue)',bg:'var(--blue-bg)',dim:'var(--blue-dim)',label:'Cold'},
   closed:{icon:'✅',color:'var(--teal)',bg:'var(--teal-bg)',dim:'var(--teal-dim)',label:'Closed'},
+  trash:{icon:'💩',color:'var(--muted)',bg:'var(--surface2)',dim:'var(--border)',label:'Not interested'},
 };
 
 function switchCsTab(tab,btn){
@@ -1747,7 +1751,7 @@ function handleVcfUpload(event){
     }
     csContacts=parsed;
     csIndex=0;
-    csCounts={cold:0,warm:0,hot:0,closed:0};
+    csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
     statusEl.textContent=`Loaded ${parsed.length} contacts`;
     document.getElementById('cs-howto').style.display='none';
     document.getElementById('cs-upload-card').style.display='none';
@@ -1806,7 +1810,7 @@ function finishContactSort(){
 function resetContactSort(){
   csContacts=[];
   csIndex=0;
-  csCounts={cold:0,warm:0,hot:0,closed:0};
+  csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
   document.getElementById('cs-howto').style.display='block';
   document.getElementById('cs-upload-card').style.display='block';
   document.getElementById('cs-swipe-wrap').style.display='none';
@@ -1833,9 +1837,11 @@ async function renderContactList(){
 
   const agentName=agents[currentAgent]?agents[currentAgent].name:'Kevin';
   const{data}=await sb.from('agent_contacts').select('*').eq('agent_name',agentName).order('last_touched',{ascending:true});
-  const contacts=data||[];
+  const allContacts=data||[];
+  const contacts=allContacts.filter(c=>c.temperature!=='trash');
+  const trashCount=allContacts.length-contacts.length;
 
-  if(contacts.length===0){
+  if(contacts.length===0&&trashCount===0){
     el.innerHTML=`<div class="card" style="text-align:center;padding:32px"><div style="font-size:32px;margin-bottom:10px">📇</div><div style="font-size:14px;color:var(--muted)">No contacts yet. Import your contacts to get started.</div></div>`;
     return;
   }
@@ -1857,6 +1863,10 @@ async function renderContactList(){
     </div>`;
   }
 
+  if(contacts.length===0){
+    html+=`<div class="card" style="text-align:center;padding:24px"><div style="font-size:13px;color:var(--muted)">All contacts are in the trash.</div></div>`;
+  }
+
   html+=contacts.map(c=>{
     const meta=TEMP_META[c.temperature]||TEMP_META.cold;
     const overdue=isOverdue(c);
@@ -1875,12 +1885,17 @@ async function renderContactList(){
               <option value="warm" ${c.temperature==='warm'?'selected':''}>🌤️ Warm</option>
               <option value="cold" ${c.temperature==='cold'?'selected':''}>🧊 Cold</option>
               <option value="closed" ${c.temperature==='closed'?'selected':''}>✅ Closed</option>
+              <option value="trash" ${c.temperature==='trash'?'selected':''}>💩 Not interested</option>
             </select>
             <button onclick="logTouch(${c.id})" style="font-size:11px;font-weight:600;padding:7px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;background:${overdue?'var(--red)':'var(--surface2)'};color:${overdue?'#fff':'var(--muted)'};white-space:nowrap">${overdue?'TOUCH ME':'Log touch'}</button>
           </div>
         </div>
       </div>`;
   }).join('');
+
+  if(trashCount>0){
+    html+=`<div style="text-align:center;margin-top:12px;font-size:12px;color:var(--muted)">💩 ${trashCount} contact${trashCount===1?'':'s'} marked not interested</div>`;
+  }
 
   el.innerHTML=html;
 }
