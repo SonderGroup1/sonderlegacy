@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sonder Legacy CRM</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f2557">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sonder CRM">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -344,11 +350,15 @@ body.light .quote-bar{color:#fff}
       <button class="nav-item" onclick="switchView('agent',this);selectAgent(3)">👤 Logan <span class="nav-dot" id="dot-3" style="background:#f5a623"></span></button>
       <button class="nav-item" onclick="switchView('agent',this);selectAgent(4)">👤 Pepper <span class="nav-dot" id="dot-4" style="background:#f06a50"></span></button>
       <div class="nav-section">Content</div>
+      <button class="nav-item" onclick="switchView('calendar',this)">📅 Content calendar</button>
       <button class="nav-item" onclick="switchView('social',this)">✨ Post generator</button>
       <button class="nav-item" onclick="switchView('textgen',this)">💬 Text generator</button>
       <button class="nav-item" onclick="switchView('buyer',this)">🏠 Buyer questionnaire</button>
       <button class="nav-item" onclick="switchView('seller',this)">📋 Seller questionnaire</button>
+      <button class="nav-item" onclick="switchView('leadprotocol',this)">🌡️ Lead protocol</button>
       <div class="nav-section">Plan</div>
+      <button class="nav-item" onclick="switchView('contactsort',this)">📱 Sort my contacts</button>
+      <button class="nav-item" onclick="switchView('leadprotocol',this)">🌡️ Lead protocol</button>
       <button class="nav-item" onclick="switchView('kpi',this)">📈 My KPI dashboard</button>
       <button class="nav-item" onclick="switchView('kpiteam',this)">🏆 Team KPIs</button>
       <button class="nav-item" onclick="switchView('goals',this)">🎯 90-day goals</button>
@@ -653,6 +663,163 @@ body.light .quote-bar{color:#fff}
       </div>
     </div>
 
+    <!-- CONTENT CALENDAR -->
+    <div id="view-calendar" class="view">
+      <div class="page-title">Content calendar</div>
+      <div class="page-sub">This week's content — no guessing, just show up and post.</div>
+
+      <div class="card" style="margin-bottom:16px;background:var(--navy);border:1px solid rgba(201,168,76,.3)">
+        <div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.7">
+          💡 <strong style="color:#fff">Reels are the discovery engine.</strong> They reach people who don't follow you yet — a brand-new agent can reach thousands of strangers with one Reel. 3 Reels a week beats 1 viral attempt a month. Post consistently and the algorithm rewards you.
+        </div>
+      </div>
+
+      <div id="calendar-content"></div>
+
+      <div class="card" style="margin-top:8px;margin-bottom:32px">
+        <div class="card-header"><span class="card-title">📚 Idea bank — rotate these in</span></div>
+        <div style="display:grid;gap:10px" id="idea-bank"></div>
+      </div>
+    </div>
+
+    <!-- CONTACT SORTER -->
+    <div id="view-contactsort" class="view">
+      <div class="page-title">Sort my contacts</div>
+      <div class="page-sub">Export your iPhone contacts, upload them here, and tag each one Cold, Warm, or Hot.</div>
+
+      <div class="card" style="margin-bottom:16px" id="cs-howto">
+        <div class="card-header"><span class="card-title">📤 Step 1 — Export from your iPhone</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:2">
+          1. Open <strong>Contacts</strong> app<br>
+          2. Tap <strong>Lists</strong> (top left) → tap <strong>Select Contacts</strong><br>
+          3. Tap <strong>Select All</strong> (top right)<br>
+          4. Tap <strong>Share Contact</strong> → <strong>Save to Files</strong> or <strong>AirDrop to yourself</strong><br>
+          5. This saves a <strong>.vcf</strong> file — upload it below
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px" id="cs-upload-card">
+        <div class="card-header"><span class="card-title">📁 Step 2 — Upload your contacts</span></div>
+        <input type="file" id="cs-file-input" accept=".vcf" style="display:none" onchange="handleVcfUpload(event)">
+        <button class="submit-btn" style="width:100%" onclick="document.getElementById('cs-file-input').click()">Choose .vcf file</button>
+        <div id="cs-upload-status" style="font-size:12px;color:var(--muted);margin-top:10px;text-align:center"></div>
+      </div>
+
+      <div id="cs-swipe-wrap" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-size:13px;color:var(--muted)"><span id="cs-progress">0 / 0</span> tagged</div>
+          <button class="nav-item" style="width:auto;padding:6px 14px;font-size:12px" onclick="resetContactSort()">Start over</button>
+        </div>
+
+        <div id="cs-card-wrap" style="text-align:center">
+          <div class="card" style="padding:32px 24px;margin-bottom:20px" id="cs-current-card">
+            <div style="font-size:24px;font-weight:500;color:var(--text);margin-bottom:6px" id="cs-name">—</div>
+            <div style="font-size:13px;color:var(--muted)" id="cs-phone">—</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+            <button onclick="tagContact('cold')" style="background:var(--blue-bg);border:1px solid var(--blue-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
+              <div style="font-size:22px;margin-bottom:4px">🧊</div>
+              <div style="font-size:13px;font-weight:500;color:var(--blue)">Cold</div>
+            </button>
+            <button onclick="tagContact('warm')" style="background:var(--amber-bg);border:1px solid var(--amber-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
+              <div style="font-size:22px;margin-bottom:4px">🌤️</div>
+              <div style="font-size:13px;font-weight:500;color:var(--amber)">Warm</div>
+            </button>
+            <button onclick="tagContact('hot')" style="background:var(--red-bg);border:1px solid var(--red-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
+              <div style="font-size:22px;margin-bottom:4px">🔥</div>
+              <div style="font-size:13px;font-weight:500;color:var(--red)">Hot</div>
+            </button>
+          </div>
+
+          <button class="nav-item" style="width:100%" onclick="skipContact()">Skip this contact →</button>
+        </div>
+      </div>
+
+      <div id="cs-summary" style="display:none">
+        <div class="card" style="text-align:center;padding:32px 24px">
+          <div style="font-size:40px;margin-bottom:12px">✅</div>
+          <div style="font-size:20px;font-family:'DM Serif Display',serif;color:var(--text);margin-bottom:6px">All done!</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Your contacts are tagged and saved.</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">
+            <div style="background:var(--blue-bg);border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:500;color:var(--blue)" id="cs-count-cold">0</div><div style="font-size:11px;color:var(--muted)">Cold</div></div>
+            <div style="background:var(--amber-bg);border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:500;color:var(--amber)" id="cs-count-warm">0</div><div style="font-size:11px;color:var(--muted)">Warm</div></div>
+            <div style="background:var(--red-bg);border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:500;color:var(--red)" id="cs-count-hot">0</div><div style="font-size:11px;color:var(--muted)">Hot</div></div>
+          </div>
+          <button class="submit-btn" style="width:100%" onclick="resetContactSort()">Sort more contacts</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEAD PROTOCOL -->
+    <div id="view-leadprotocol" class="view">
+      <div class="page-title">Lead protocol</div>
+      <div class="page-sub">Not every lead gets the same energy. Know the temperature, know the play.</div>
+
+      <div class="card" style="margin-bottom:16px;border-left:3px solid var(--blue)">
+        <div class="card-header"><span class="card-title" style="color:var(--blue)">🧊 Cold lead</span></div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6">On your list but quiet. No real engagement yet. Old database names, expired leads that went dark, people who gave you their info once and vanished. Not dead — just not warm.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div style="background:var(--surface2);border-radius:8px;padding:10px 12px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Response time</div>
+            <div style="font-size:14px;font-weight:500;color:var(--text)">No urgency — nurture cadence</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:10px 12px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Method</div>
+            <div style="font-size:14px;font-weight:500;color:var(--text)">Text or email, not a call</div>
+          </div>
+        </div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          <strong>The play:</strong> Add to your database. Monthly value touches — market updates, a helpful article, a simple "thinking of you." No sales pressure. Your job is education and staying top of mind until they warm up, not closing them today.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;border-left:3px solid var(--amber)">
+        <div class="card-header"><span class="card-title" style="color:var(--amber)">🌤️ Warm lead</span></div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6">They know who you are and they're engaging. Opened your last few texts, asked a general question, said "we're thinking about next year," or a past client sent them your way. Real interest, no urgency yet.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div style="background:var(--surface2);border-radius:8px;padding:10px 12px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Response time</div>
+            <div style="font-size:14px;font-weight:500;color:var(--text)">Within 24 hours</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:10px 12px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Method</div>
+            <div style="font-size:14px;font-weight:500;color:var(--text)">Personal call or text</div>
+          </div>
+        </div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          <strong>The play:</strong> Reach out personally, not a generic drip. Qualify them — ask about timeline, motivation, financing. Add them to a weekly follow-up cadence. Your goal is moving them toward an appointment, not pushing them into one.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:24px;border-left:3px solid var(--red)">
+        <div class="card-header"><span class="card-title" style="color:var(--red)">🔥 Hot lead</span></div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6">Ready now. They asked about a specific home, want a valuation, gave you a timeline under 60 days, or straight up said "I want to talk." Clear intent, real urgency.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div style="background:var(--surface2);border-radius:8px;padding:10px 12px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Response time</div>
+            <div style="font-size:14px;font-weight:600;color:var(--red)">Within 5 minutes</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:10px 12px">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Method</div>
+            <div style="font-size:14px;font-weight:500;color:var(--text)">Call. Always call.</div>
+          </div>
+        </div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          <strong>The play:</strong> Speed is everything. Reaching out in the first 5 minutes makes you far more likely to connect and qualify than waiting even an hour. Don't text, don't email — call. Get the appointment booked immediately. Pre-approval and consultation. Goal: signed this week.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:32px">
+        <div class="card-header"><span class="card-title">Quick gut check</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.9">
+          Score a lead in 10 seconds by asking two questions: <strong>How clear is their intent, and how soon is their timeline?</strong><br><br>
+          Clear intent + soon timeline = 🔥 hot. Some interest + no urgency = 🌤️ warm. Quiet or unengaged = 🧊 cold.<br><br>
+          Don't give every name equal energy. The ready buyer and the someday-maybe daydreamer are not the same lead — treat them differently and you'll close more with less wasted effort.
+        </div>
+      </div>
+    </div>
+
     <!-- KPI DASHBOARD — INDIVIDUAL -->
     <div id="view-kpi" class="view">
       <div class="page-title">My KPI dashboard</div>
@@ -660,6 +827,7 @@ body.light .quote-bar{color:#fff}
       <div class="agent-selector" id="kpi-agent-selector"></div>
       <div id="kpi-content"></div>
     </div>
+
 
     <!-- KPI DASHBOARD — TEAM -->
     <div id="view-kpiteam" class="view">
@@ -709,6 +877,91 @@ body.light .quote-bar{color:#fff}
       <div class="card">
         <div class="card-header"><span class="card-title">Seller intake questions</span><span class="card-sub">Sonder Legacy</span></div>
         <div id="seller-questions"></div>
+      </div>
+    </div>
+
+    <!-- LEAD PROTOCOL -->
+    <div id="view-leadprotocol" class="view">
+      <div class="page-title">Lead protocol</div>
+      <div class="page-sub">Every lead gets a temperature. Every temperature gets a plan. No lead falls through the cracks.</div>
+
+      <div class="card" style="margin-bottom:16px;border-left:4px solid var(--red)">
+        <div class="card-header">
+          <span class="card-title">🔥 Hot lead</span>
+          <span class="badge b-fire">Act within 5 minutes</span>
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">Ready to move now. Motivated, has a timeline under 60 days, actively looking or actively selling.</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Signs of a hot lead</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.9;margin-bottom:14px">
+          • Says they need to move in the next 30-60 days<br>
+          • Pre-approved or ready to get pre-approved immediately<br>
+          • Already has a home to sell and needs to buy<br>
+          • Referred by a past client with urgency<br>
+          • Actively touring homes or has toured recently
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">What to do</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.9">
+          1. Respond within 5 minutes — speed to lead wins the deal<br>
+          2. Call, don't text first — get them on the phone<br>
+          3. Book the appointment same call if possible<br>
+          4. Get pre-approval started immediately if buying<br>
+          5. Follow up same day with next steps in writing
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;border-left:4px solid var(--amber)">
+        <div class="card-header">
+          <span class="card-title">🌤️ Warm lead</span>
+          <span class="badge b-push">Act within 24 hours</span>
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">Interested, but no urgency. Thinking about it, exploring options, timeline is 3-6 months out.</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Signs of a warm lead</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.9;margin-bottom:14px">
+          • Says they're "starting to think about" buying or selling<br>
+          • Timeline is 3-6 months away<br>
+          • Asking questions but hasn't committed to next steps<br>
+          • Past client checking in about the market<br>
+          • Referral with no specific urgency mentioned
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">What to do</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.9">
+          1. Personal outreach within 24 hours — call or text, not email<br>
+          2. Qualify: ask about timeline, motivation, and financing<br>
+          3. Add to weekly follow-up cadence — don't let them go cold<br>
+          4. Send relevant market info or listings to build value<br>
+          5. Goal is to move them to a consultation or appointment
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;border-left:4px solid var(--blue)">
+        <div class="card-header">
+          <span class="card-title">❄️ Cold lead</span>
+          <span class="badge" style="background:var(--blue-bg);color:var(--blue)">Long-term nurture</span>
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">No immediate relationship or intent. Someone in your database, a cold contact, or someone who hasn't engaged in a while.</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Signs of a cold lead</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.9;margin-bottom:14px">
+          • No specific timeline or reason to move<br>
+          • Hasn't responded to recent outreach<br>
+          • New contact with no established relationship<br>
+          • Database contact you haven't touched in months<br>
+          • Someone "just looking" with no real motivation yet
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">What to do</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.9">
+          1. Add to database, tag as cold — don't force urgency that isn't there<br>
+          2. Nurture monthly — value touches, not sales pressure<br>
+          3. Share market updates, local content, or a genuine check-in<br>
+          4. Never mix a check-in with a business ask — build trust first<br>
+          5. Goal is staying top of mind until they warm up naturally
+        </div>
+      </div>
+
+      <div class="card" style="background:var(--navy);border:1px solid rgba(201,168,76,.25)">
+        <div class="card-header"><span class="card-title" style="color:var(--gold)">The rule</span></div>
+        <div style="font-size:14px;color:#fff;line-height:1.8">
+          Every lead you touch gets tagged hot, warm, or cold — no exceptions. Speed matters most for hot leads. Consistency matters most for warm and cold leads. A lead that falls through the cracks is a closing you lost before you ever had a chance to earn it.
+        </div>
       </div>
     </div>
 
@@ -1089,6 +1342,194 @@ function renderSocial(){
 
 function toggleCheck(idx,key){state[idx][key]=!state[idx][key];renderAgentView(idx);renderBroker();updateDots();saveAgentData(idx);}
 
+// ── CONTENT CALENDAR ─────────────────────────────────────────────
+const weeklyContent=[
+  {day:'Monday',type:'Educational / Risk',icon:'🎓',key:'mon',
+    prompt:'Teach something or address a fear. "3 things to check before making an offer" or "Is a market crash actually coming? Here\'s what the data says."',
+    examples:['Risks of buying — repairs, market timing, and why crashes are rare (with stats)','3 things to do before making an offer in a competitive market','What actually happens on closing day']},
+  {day:'Wednesday',type:'Market Data / Why Utah',icon:'📊',key:'wed',
+    prompt:'Local stats that only you can share. Appreciation rates, days on market, why Utah specifically right now.',
+    examples:['Why buy in Utah — population growth + appreciation stats','What $500k buys in 3 different neighborhoods','This month\'s Utah market update in 30 seconds']},
+  {day:'Friday',type:'Personality / Deal of the Week',icon:'🔥',key:'fri',
+    prompt:'Show your face. Talk about a deal you\'re working, a win, or just who you are outside of real estate.',
+    examples:['My personal deal of the week — what made it work','A reason or two to consider new construction right now','Behind the scenes of my week']},
+];
+
+const ideaBank=[
+  {icon:'🏡',label:'Listing spotlight',desc:'Get seller permission, film a walkthrough of an awesome house'},
+  {icon:'🏗️',label:'New construction reasons',desc:'2-3 solid reasons to consider new construction right now'},
+  {icon:'📍',label:'Why buy in Utah',desc:'Population growth, job market, appreciation stats'},
+  {icon:'⚠️',label:'Risks of buying',desc:'Repairs, market timing, crash stats — build trust through honesty'},
+  {icon:'✨',label:'Listing highlight',desc:'Quick feature callout on a current listing'},
+  {icon:'🏘️',label:'Development highlight',desc:'New neighborhood or development worth knowing about'},
+];
+
+function weekKey(){
+  const now=new Date();
+  const jan1=new Date(now.getFullYear(),0,1);
+  const week=Math.ceil((((now-jan1)/86400000)+jan1.getDay()+1)/7);
+  return now.getFullYear()+'-w'+week;
+}
+
+async function loadContentCalendar(idx){
+  const a=agents[idx];
+  const wk=weekKey();
+  const{data}=await sb.from('content_calendar').select('*').eq('agent_name',a.name).eq('week_key',wk);
+  const done={};
+  (data||[]).forEach(r=>{done[r.day_key]=true;});
+  return done;
+}
+
+async function renderCalendar(){
+  const idx=currentAgent!=null?currentAgent:0;
+  const a=agents[idx];
+  const el=document.getElementById('calendar-content');
+  const bankEl=document.getElementById('idea-bank');
+  if(!el)return;
+
+  const done=await loadContentCalendar(idx);
+
+  el.innerHTML=weeklyContent.map(c=>`
+    <div class="card" style="margin-bottom:12px;${done[c.key]?'border-left:3px solid var(--teal)':'border-left:3px solid var(--border2)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">${c.day}</div>
+          <div style="font-size:16px;font-weight:500;color:var(--text)">${c.icon} ${c.type}</div>
+        </div>
+        <div onclick="toggleCalendarDay('${c.key}')" style="cursor:pointer;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:${done[c.key]?'var(--teal-bg)':'var(--surface2)'};border:1px solid ${done[c.key]?'var(--teal-dim)':'var(--border)'}">${done[c.key]?'✅':'⬜'}</div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.6">${c.prompt}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Ideas</div>
+      ${c.examples.map(ex=>`<div style="font-size:12px;color:var(--text);padding:6px 0;border-top:1px solid var(--border)">${ex}</div>`).join('')}
+    </div>`).join('');
+
+  if(bankEl){
+    bankEl.innerHTML=ideaBank.map(i=>`
+      <div style="display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:10px;padding:12px">
+        <div style="font-size:20px">${i.icon}</div>
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${i.label}</div>
+          <div style="font-size:12px;color:var(--muted)">${i.desc}</div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+async function toggleCalendarDay(dayKey){
+  const idx=currentAgent!=null?currentAgent:0;
+  const a=agents[idx];
+  const wk=weekKey();
+  const done=await loadContentCalendar(idx);
+  if(done[dayKey]){
+    await sb.from('content_calendar').delete().eq('agent_name',a.name).eq('week_key',wk).eq('day_key',dayKey);
+  } else {
+    await sb.from('content_calendar').insert([{agent_name:a.name,week_key:wk,day_key:dayKey,completed_at:new Date().toISOString()}]);
+  }
+  renderCalendar();
+}
+let csContacts=[];
+let csIndex=0;
+let csCounts={cold:0,warm:0,hot:0};
+let csCurrentAgent=null;
+
+function parseVcf(text){
+  const cards=text.split('BEGIN:VCARD').slice(1);
+  const contacts=[];
+  cards.forEach(card=>{
+    const nameMatch=card.match(/FN:(.*)/);
+    const telMatch=card.match(/TEL[^:]*:(.*)/);
+    const emailMatch=card.match(/EMAIL[^:]*:(.*)/);
+    if(nameMatch){
+      contacts.push({
+        name:nameMatch[1].trim(),
+        phone:telMatch?telMatch[1].trim():'',
+        email:emailMatch?emailMatch[1].trim():''
+      });
+    }
+  });
+  return contacts;
+}
+
+function handleVcfUpload(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const statusEl=document.getElementById('cs-upload-status');
+  statusEl.textContent='Reading contacts...';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const parsed=parseVcf(e.target.result);
+    if(parsed.length===0){
+      statusEl.textContent='No contacts found in that file. Try again.';
+      return;
+    }
+    csContacts=parsed;
+    csIndex=0;
+    csCounts={cold:0,warm:0,hot:0};
+    statusEl.textContent=`Loaded ${parsed.length} contacts`;
+    document.getElementById('cs-howto').style.display='none';
+    document.getElementById('cs-upload-card').style.display='none';
+    document.getElementById('cs-swipe-wrap').style.display='block';
+    document.getElementById('cs-summary').style.display='none';
+    // Determine which agent is logged in
+    csCurrentAgent=agents[currentAgent]?agents[currentAgent].name:'Kevin';
+    showCurrentContact();
+  };
+  reader.readAsText(file);
+}
+
+function showCurrentContact(){
+  if(csIndex>=csContacts.length){
+    finishContactSort();
+    return;
+  }
+  const c=csContacts[csIndex];
+  document.getElementById('cs-name').textContent=c.name;
+  document.getElementById('cs-phone').textContent=c.phone||c.email||'No phone or email';
+  document.getElementById('cs-progress').textContent=`${csIndex} / ${csContacts.length}`;
+}
+
+async function tagContact(temp){
+  const c=csContacts[csIndex];
+  csCounts[temp]++;
+  try{
+    await sb.from('agent_contacts').insert([{
+      agent_name:csCurrentAgent,
+      contact_name:c.name,
+      phone:c.phone,
+      email:c.email,
+      temperature:temp,
+      tagged_at:new Date().toISOString()
+    }]);
+  }catch(e){}
+  csIndex++;
+  showCurrentContact();
+}
+
+function skipContact(){
+  csIndex++;
+  showCurrentContact();
+}
+
+function finishContactSort(){
+  document.getElementById('cs-swipe-wrap').style.display='none';
+  document.getElementById('cs-summary').style.display='block';
+  document.getElementById('cs-count-cold').textContent=csCounts.cold;
+  document.getElementById('cs-count-warm').textContent=csCounts.warm;
+  document.getElementById('cs-count-hot').textContent=csCounts.hot;
+}
+
+function resetContactSort(){
+  csContacts=[];
+  csIndex=0;
+  csCounts={cold:0,warm:0,hot:0};
+  document.getElementById('cs-howto').style.display='block';
+  document.getElementById('cs-upload-card').style.display='block';
+  document.getElementById('cs-swipe-wrap').style.display='none';
+  document.getElementById('cs-summary').style.display='none';
+  document.getElementById('cs-upload-status').textContent='';
+  document.getElementById('cs-file-input').value='';
+}
+
 // ── KPI DASHBOARD ─────────────────────────────────────────────
 const agentGoals=agents.map(()=>({income_goal:25000,closings_goal:2,avg_sale_price:500000,commission_rate:0.025}));
 let kpiAgent=0;
@@ -1366,6 +1807,7 @@ function switchView(v,btn){
   if(v==='books')renderBooks();
   if(v==='kpi')initKPISelector();
   if(v==='kpiteam')renderKPITeam();
+  if(v==='calendar')renderCalendar();
 }
 
 const buyerQs=[
