@@ -77,6 +77,7 @@ body.light .toggle-thumb{transform:translateX(12px)}
   .sidebar-overlay.show{display:block}
   .main{padding:16px}
   .app{flex-direction:column}
+  .spotlight-wrap{grid-template-columns:1fr !important}
 }
 
 @media (max-width:600px){
@@ -464,7 +465,7 @@ body.light .quote-bar{color:#fff}
       </div>
 
       <!-- Team snapshot -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+      <div class="stat-grid" style="margin-bottom:16px">
         <div class="stat-card"><div class="stat-label">Team calls today</div><div class="stat-value" id="t-calls">0</div><div class="stat-sub">goal: 100</div></div>
         <div class="stat-card"><div class="stat-label">Conversations</div><div class="stat-value" id="t-convos">0</div><div class="stat-sub">goal: 25</div></div>
         <div class="stat-card"><div class="stat-label">Referrals asked</div><div class="stat-value" id="t-refs">0</div><div class="stat-sub">goal: 25</div></div>
@@ -473,6 +474,7 @@ body.light .quote-bar{color:#fff}
 
       <div class="card">
         <div class="card-header"><span class="card-title">Daily activity — all agents</span><span class="card-sub" id="broker-date"></span></div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table class="atable">
           <thead><tr>
             <th>Agent</th>
@@ -485,6 +487,7 @@ body.light .quote-bar{color:#fff}
           </tr></thead>
           <tbody id="broker-tbody"></tbody>
         </table>
+        </div>
       </div>
 
       <div class="card">
