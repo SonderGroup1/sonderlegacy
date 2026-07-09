@@ -765,69 +765,93 @@ body.light .quote-bar{color:#fff}
     <!-- CONTACT SORTER -->
     <div id="view-contactsort" class="view">
       <div class="page-title">Sort my contacts</div>
-      <div class="page-sub">Export your iPhone contacts, upload them here, and tag each one Cold, Warm, or Hot.</div>
+      <div class="page-sub">Import your contacts, tag them, and never let a hot lead go cold from neglect.</div>
 
-      <div class="card" style="margin-bottom:16px" id="cs-howto">
-        <div class="card-header"><span class="card-title">📤 Step 1 — Export from your iPhone</span></div>
-        <div style="font-size:13px;color:var(--text);line-height:2">
-          1. Open <strong>Contacts</strong> app<br>
-          2. Tap <strong>Lists</strong> (top left) → tap <strong>Select Contacts</strong><br>
-          3. Tap <strong>Select All</strong> (top right)<br>
-          4. Tap <strong>Share Contact</strong> → <strong>Save to Files</strong> or <strong>AirDrop to yourself</strong><br>
-          5. This saves a <strong>.vcf</strong> file — upload it below
+      <div style="display:flex;gap:8px;margin-bottom:16px" id="cs-tabs">
+        <button class="agent-pill active" onclick="switchCsTab('import',this)">📤 Import</button>
+        <button class="agent-pill" onclick="switchCsTab('mylist',this)">📋 My contacts</button>
+      </div>
+
+      <!-- IMPORT TAB -->
+      <div id="cs-tab-import">
+        <div class="card" style="margin-bottom:16px" id="cs-howto">
+          <div class="card-header"><span class="card-title">📤 Step 1 — Export from your iPhone</span></div>
+          <div style="font-size:13px;color:var(--text);line-height:2">
+            1. Open <strong>Contacts</strong> app<br>
+            2. Tap <strong>Lists</strong> (top left) → tap <strong>Select Contacts</strong><br>
+            3. Tap <strong>Select All</strong> (top right)<br>
+            4. Tap <strong>Share Contact</strong> → <strong>Save to Files</strong> or <strong>AirDrop to yourself</strong><br>
+            5. This saves a <strong>.vcf</strong> file — upload it below
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px" id="cs-upload-card">
+          <div class="card-header"><span class="card-title">📁 Step 2 — Upload your contacts</span></div>
+          <input type="file" id="cs-file-input" accept=".vcf" style="display:none" onchange="handleVcfUpload(event)">
+          <button class="submit-btn" style="width:100%" onclick="document.getElementById('cs-file-input').click()">Choose .vcf file</button>
+          <div id="cs-upload-status" style="font-size:12px;color:var(--muted);margin-top:10px;text-align:center"></div>
+        </div>
+
+        <div id="cs-swipe-wrap" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <div style="font-size:13px;color:var(--muted)"><span id="cs-progress">0 / 0</span> tagged</div>
+            <button class="nav-item" style="width:auto;padding:6px 14px;font-size:12px" onclick="resetContactSort()">Start over</button>
+          </div>
+
+          <div id="cs-card-wrap" style="text-align:center">
+            <div class="card" style="padding:32px 24px;margin-bottom:20px" id="cs-current-card">
+              <div style="font-size:24px;font-weight:500;color:var(--text);margin-bottom:6px" id="cs-name">—</div>
+              <div style="font-size:13px;color:var(--muted)" id="cs-phone">—</div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+              <button onclick="tagContact('cold')" style="background:var(--blue-bg);border:1px solid var(--blue-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
+                <div style="font-size:22px;margin-bottom:4px">🧊</div>
+                <div style="font-size:13px;font-weight:500;color:var(--blue)">Cold</div>
+              </button>
+              <button onclick="tagContact('warm')" style="background:var(--amber-bg);border:1px solid var(--amber-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
+                <div style="font-size:22px;margin-bottom:4px">🌤️</div>
+                <div style="font-size:13px;font-weight:500;color:var(--amber)">Warm</div>
+              </button>
+              <button onclick="tagContact('hot')" style="background:var(--red-bg);border:1px solid var(--red-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
+                <div style="font-size:22px;margin-bottom:4px">🔥</div>
+                <div style="font-size:13px;font-weight:500;color:var(--red)">Hot</div>
+              </button>
+            </div>
+            <button onclick="tagContact('closed')" style="width:100%;background:var(--teal-bg);border:1px solid var(--teal-dim);border-radius:12px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px">
+              <span style="font-size:16px">✅</span> <span style="font-size:13px;font-weight:500;color:var(--teal)">Closed — stay in touch</span>
+            </button>
+
+            <button class="nav-item" style="width:100%" onclick="skipContact()">Skip this contact →</button>
+          </div>
+        </div>
+
+        <div id="cs-summary" style="display:none">
+          <div class="card" style="text-align:center;padding:32px 24px">
+            <div style="font-size:40px;margin-bottom:12px">✅</div>
+            <div style="font-size:20px;font-family:'DM Serif Display',serif;color:var(--text);margin-bottom:6px">All done!</div>
+            <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Your contacts are tagged and saved.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:20px">
+              <div style="background:var(--blue-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--blue)" id="cs-count-cold">0</div><div style="font-size:10px;color:var(--muted)">Cold</div></div>
+              <div style="background:var(--amber-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--amber)" id="cs-count-warm">0</div><div style="font-size:10px;color:var(--muted)">Warm</div></div>
+              <div style="background:var(--red-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--red)" id="cs-count-hot">0</div><div style="font-size:10px;color:var(--muted)">Hot</div></div>
+              <div style="background:var(--teal-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--teal)" id="cs-count-closed">0</div><div style="font-size:10px;color:var(--muted)">Closed</div></div>
+            </div>
+            <button class="submit-btn" style="width:100%;margin-bottom:8px" onclick="resetContactSort()">Sort more contacts</button>
+            <button class="nav-item" style="width:100%" onclick="switchCsTab('mylist',document.querySelectorAll('#cs-tabs .agent-pill')[1])">View my contact list →</button>
+          </div>
         </div>
       </div>
 
-      <div class="card" style="margin-bottom:16px" id="cs-upload-card">
-        <div class="card-header"><span class="card-title">📁 Step 2 — Upload your contacts</span></div>
-        <input type="file" id="cs-file-input" accept=".vcf" style="display:none" onchange="handleVcfUpload(event)">
-        <button class="submit-btn" style="width:100%" onclick="document.getElementById('cs-file-input').click()">Choose .vcf file</button>
-        <div id="cs-upload-status" style="font-size:12px;color:var(--muted);margin-top:10px;text-align:center"></div>
-      </div>
-
-      <div id="cs-swipe-wrap" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <div style="font-size:13px;color:var(--muted)"><span id="cs-progress">0 / 0</span> tagged</div>
-          <button class="nav-item" style="width:auto;padding:6px 14px;font-size:12px" onclick="resetContactSort()">Start over</button>
-        </div>
-
-        <div id="cs-card-wrap" style="text-align:center">
-          <div class="card" style="padding:32px 24px;margin-bottom:20px" id="cs-current-card">
-            <div style="font-size:24px;font-weight:500;color:var(--text);margin-bottom:6px" id="cs-name">—</div>
-            <div style="font-size:13px;color:var(--muted)" id="cs-phone">—</div>
+      <!-- MY LIST TAB -->
+      <div id="cs-tab-mylist" style="display:none">
+        <div class="card" style="margin-bottom:16px;background:var(--navy);border:1px solid rgba(201,168,76,.3)">
+          <div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.7">
+            🔥 Hot = touch every 2-3 days · 🌤️ Warm = weekly · 🧊 Cold = monthly · ✅ Closed = quarterly.<br>
+            When a contact is overdue, their card turns red and says <strong style="color:#fff">TOUCH ME</strong>.
           </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
-            <button onclick="tagContact('cold')" style="background:var(--blue-bg);border:1px solid var(--blue-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
-              <div style="font-size:22px;margin-bottom:4px">🧊</div>
-              <div style="font-size:13px;font-weight:500;color:var(--blue)">Cold</div>
-            </button>
-            <button onclick="tagContact('warm')" style="background:var(--amber-bg);border:1px solid var(--amber-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
-              <div style="font-size:22px;margin-bottom:4px">🌤️</div>
-              <div style="font-size:13px;font-weight:500;color:var(--amber)">Warm</div>
-            </button>
-            <button onclick="tagContact('hot')" style="background:var(--red-bg);border:1px solid var(--red-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
-              <div style="font-size:22px;margin-bottom:4px">🔥</div>
-              <div style="font-size:13px;font-weight:500;color:var(--red)">Hot</div>
-            </button>
-          </div>
-
-          <button class="nav-item" style="width:100%" onclick="skipContact()">Skip this contact →</button>
         </div>
-      </div>
-
-      <div id="cs-summary" style="display:none">
-        <div class="card" style="text-align:center;padding:32px 24px">
-          <div style="font-size:40px;margin-bottom:12px">✅</div>
-          <div style="font-size:20px;font-family:'DM Serif Display',serif;color:var(--text);margin-bottom:6px">All done!</div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Your contacts are tagged and saved.</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">
-            <div style="background:var(--blue-bg);border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:500;color:var(--blue)" id="cs-count-cold">0</div><div style="font-size:11px;color:var(--muted)">Cold</div></div>
-            <div style="background:var(--amber-bg);border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:500;color:var(--amber)" id="cs-count-warm">0</div><div style="font-size:11px;color:var(--muted)">Warm</div></div>
-            <div style="background:var(--red-bg);border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:500;color:var(--red)" id="cs-count-hot">0</div><div style="font-size:11px;color:var(--muted)">Hot</div></div>
-          </div>
-          <button class="submit-btn" style="width:100%" onclick="resetContactSort()">Sort more contacts</button>
-        </div>
+        <div id="cs-list-content"></div>
       </div>
     </div>
 
@@ -1672,8 +1696,24 @@ Be specific with numbers. Don't sugarcoat. Don't be mean. No emojis anywhere.`;
 
 let csContacts=[];
 let csIndex=0;
-let csCounts={cold:0,warm:0,hot:0};
+let csCounts={cold:0,warm:0,hot:0,closed:0};
 let csCurrentAgent=null;
+
+const TOUCH_CADENCE={hot:3,warm:7,cold:30,closed:90}; // days
+const TEMP_META={
+  hot:{icon:'🔥',color:'var(--red)',bg:'var(--red-bg)',dim:'var(--red-dim)',label:'Hot'},
+  warm:{icon:'🌤️',color:'var(--amber)',bg:'var(--amber-bg)',dim:'var(--amber-dim)',label:'Warm'},
+  cold:{icon:'🧊',color:'var(--blue)',bg:'var(--blue-bg)',dim:'var(--blue-dim)',label:'Cold'},
+  closed:{icon:'✅',color:'var(--teal)',bg:'var(--teal-bg)',dim:'var(--teal-dim)',label:'Closed'},
+};
+
+function switchCsTab(tab,btn){
+  document.querySelectorAll('#cs-tabs .agent-pill').forEach(p=>p.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('cs-tab-import').style.display=tab==='import'?'block':'none';
+  document.getElementById('cs-tab-mylist').style.display=tab==='mylist'?'block':'none';
+  if(tab==='mylist')renderContactList();
+}
 
 function parseVcf(text){
   const cards=text.split('BEGIN:VCARD').slice(1);
@@ -1707,13 +1747,12 @@ function handleVcfUpload(event){
     }
     csContacts=parsed;
     csIndex=0;
-    csCounts={cold:0,warm:0,hot:0};
+    csCounts={cold:0,warm:0,hot:0,closed:0};
     statusEl.textContent=`Loaded ${parsed.length} contacts`;
     document.getElementById('cs-howto').style.display='none';
     document.getElementById('cs-upload-card').style.display='none';
     document.getElementById('cs-swipe-wrap').style.display='block';
     document.getElementById('cs-summary').style.display='none';
-    // Determine which agent is logged in
     csCurrentAgent=agents[currentAgent]?agents[currentAgent].name:'Kevin';
     showCurrentContact();
   };
@@ -1741,7 +1780,9 @@ async function tagContact(temp){
       phone:c.phone,
       email:c.email,
       temperature:temp,
-      tagged_at:new Date().toISOString()
+      tagged_at:new Date().toISOString(),
+      last_touched:new Date().toISOString(),
+      touch_count:1
     }]);
   }catch(e){}
   csIndex++;
@@ -1759,18 +1800,101 @@ function finishContactSort(){
   document.getElementById('cs-count-cold').textContent=csCounts.cold;
   document.getElementById('cs-count-warm').textContent=csCounts.warm;
   document.getElementById('cs-count-hot').textContent=csCounts.hot;
+  document.getElementById('cs-count-closed').textContent=csCounts.closed;
 }
 
 function resetContactSort(){
   csContacts=[];
   csIndex=0;
-  csCounts={cold:0,warm:0,hot:0};
+  csCounts={cold:0,warm:0,hot:0,closed:0};
   document.getElementById('cs-howto').style.display='block';
   document.getElementById('cs-upload-card').style.display='block';
   document.getElementById('cs-swipe-wrap').style.display='none';
   document.getElementById('cs-summary').style.display='none';
   document.getElementById('cs-upload-status').textContent='';
   document.getElementById('cs-file-input').value='';
+}
+
+// ── MY CONTACT LIST — with touch tracking & TOUCH ME urgency ────
+function daysSince(dateStr){
+  if(!dateStr)return 999;
+  return Math.floor((new Date()-new Date(dateStr))/86400000);
+}
+
+function isOverdue(contact){
+  const cadence=TOUCH_CADENCE[contact.temperature]||30;
+  return daysSince(contact.last_touched)>=cadence;
+}
+
+async function renderContactList(){
+  const el=document.getElementById('cs-list-content');
+  if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Loading...</div>';
+
+  const agentName=agents[currentAgent]?agents[currentAgent].name:'Kevin';
+  const{data}=await sb.from('agent_contacts').select('*').eq('agent_name',agentName).order('last_touched',{ascending:true});
+  const contacts=data||[];
+
+  if(contacts.length===0){
+    el.innerHTML=`<div class="card" style="text-align:center;padding:32px"><div style="font-size:32px;margin-bottom:10px">📇</div><div style="font-size:14px;color:var(--muted)">No contacts yet. Import your contacts to get started.</div></div>`;
+    return;
+  }
+
+  // Sort: overdue first, then by temperature priority (hot, warm, cold, closed)
+  const tempPriority={hot:0,warm:1,cold:2,closed:3};
+  contacts.sort((a,b)=>{
+    const aOver=isOverdue(a),bOver=isOverdue(b);
+    if(aOver!==bOver)return aOver?-1:1;
+    return(tempPriority[a.temperature]||9)-(tempPriority[b.temperature]||9);
+  });
+
+  const overdueCount=contacts.filter(isOverdue).length;
+
+  let html='';
+  if(overdueCount>0){
+    html+=`<div class="card" style="margin-bottom:16px;background:var(--red-bg);border:1px solid var(--red-dim)">
+      <div style="font-size:14px;font-weight:600;color:var(--red)">⚠️ ${overdueCount} contact${overdueCount===1?' needs':'s need'} a touch right now</div>
+    </div>`;
+  }
+
+  html+=contacts.map(c=>{
+    const meta=TEMP_META[c.temperature]||TEMP_META.cold;
+    const overdue=isOverdue(c);
+    const days=daysSince(c.last_touched);
+    const daysText=days>=999?'never touched':days===0?'touched today':`touched ${days}d ago`;
+    return`
+      <div class="card" style="margin-bottom:10px;padding:14px 16px;${overdue?'border:1px solid var(--red);background:var(--red-bg)':''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.contact_name}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${daysText}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+            <select onchange="changeContactTemp(${c.id},this.value)" style="font-size:11px;padding:5px 8px;border-radius:6px;border:1px solid ${meta.dim};background:${meta.bg};color:${meta.color};font-family:'DM Sans',sans-serif">
+              <option value="hot" ${c.temperature==='hot'?'selected':''}>🔥 Hot</option>
+              <option value="warm" ${c.temperature==='warm'?'selected':''}>🌤️ Warm</option>
+              <option value="cold" ${c.temperature==='cold'?'selected':''}>🧊 Cold</option>
+              <option value="closed" ${c.temperature==='closed'?'selected':''}>✅ Closed</option>
+            </select>
+            <button onclick="logTouch(${c.id})" style="font-size:11px;font-weight:600;padding:7px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;background:${overdue?'var(--red)':'var(--surface2)'};color:${overdue?'#fff':'var(--muted)'};white-space:nowrap">${overdue?'TOUCH ME':'Log touch'}</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML=html;
+}
+
+async function logTouch(contactId){
+  const{data}=await sb.from('agent_contacts').select('touch_count').eq('id',contactId).single();
+  const newCount=data?(data.touch_count||0)+1:1;
+  await sb.from('agent_contacts').update({last_touched:new Date().toISOString(),touch_count:newCount}).eq('id',contactId);
+  renderContactList();
+}
+
+async function changeContactTemp(contactId,newTemp){
+  await sb.from('agent_contacts').update({temperature:newTemp}).eq('id',contactId);
+  renderContactList();
 }
 
 // ── KPI DASHBOARD ─────────────────────────────────────────────
@@ -2052,6 +2176,7 @@ function switchView(v,btn){
   if(v==='kpiteam')renderKPITeam();
   if(v==='calendar')renderCalendar();
   if(v==='goals')renderQuarterlyCheckin();
+  if(v==='contactsort')switchCsTab('import',document.querySelector('#cs-tabs .agent-pill'));
   // Close mobile sidebar after navigating
   if(window.innerWidth<=860)closeSidebar();
   window.scrollTo(0,0);
