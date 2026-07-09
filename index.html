@@ -137,6 +137,8 @@ body.light .toggle-thumb{transform:translateX(12px)}
 .field-grp input,.field-grp textarea{width:100%;padding:11px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none}
 .field-grp input:focus,.field-grp textarea:focus{border-color:var(--gold)}
 .field-grp textarea{resize:vertical;min-height:70px;line-height:1.5}
+.lc-btn{padding:10px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.lc-btn.lc-selected{background:var(--gold-bg);border-color:var(--gold);color:var(--gold)}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .card-title{font-size:15px;font-weight:500;color:var(--text)}
 .card-sub{font-size:12px;color:var(--muted)}
@@ -799,9 +801,21 @@ body.light .quote-bar{color:#fff}
           </div>
 
           <div id="cs-card-wrap" style="text-align:center">
-            <div class="card" style="padding:32px 24px;margin-bottom:20px" id="cs-current-card">
+            <div class="card" style="padding:32px 24px;margin-bottom:14px" id="cs-current-card">
               <div style="font-size:24px;font-weight:500;color:var(--text);margin-bottom:6px" id="cs-name">—</div>
               <div style="font-size:13px;color:var(--muted)" id="cs-phone">—</div>
+            </div>
+
+            <div style="text-align:left;margin-bottom:16px">
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">When did you last talk to them?</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <button onclick="setLastContacted(0,this)" class="lc-btn lc-selected" data-days="0">Today</button>
+                <button onclick="setLastContacted(3,this)" class="lc-btn" data-days="3">A few days ago</button>
+                <button onclick="setLastContacted(14,this)" class="lc-btn" data-days="14">2 weeks ago</button>
+                <button onclick="setLastContacted(30,this)" class="lc-btn" data-days="30">A month ago</button>
+                <button onclick="setLastContacted(90,this)" class="lc-btn" data-days="90">Months ago</button>
+                <button onclick="setLastContacted(365,this)" class="lc-btn" data-days="365">Over a year</button>
+              </div>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
@@ -1701,6 +1715,13 @@ let csContacts=[];
 let csIndex=0;
 let csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
 let csCurrentAgent=null;
+let csLastContactedDays=0;
+
+function setLastContacted(days,btn){
+  csLastContactedDays=days;
+  document.querySelectorAll('.lc-btn').forEach(b=>b.classList.remove('lc-selected'));
+  btn.classList.add('lc-selected');
+}
 
 const TOUCH_CADENCE={hot:3,warm:7,cold:30,closed:90}; // days
 const TEMP_META={
@@ -1772,11 +1793,18 @@ function showCurrentContact(){
   document.getElementById('cs-name').textContent=c.name;
   document.getElementById('cs-phone').textContent=c.phone||c.email||'No phone or email';
   document.getElementById('cs-progress').textContent=`${csIndex} / ${csContacts.length}`;
+  // Reset last-contacted selector to "Today" for each new contact
+  csLastContactedDays=0;
+  document.querySelectorAll('.lc-btn').forEach(b=>b.classList.remove('lc-selected'));
+  const todayBtn=document.querySelector('.lc-btn[data-days="0"]');
+  if(todayBtn)todayBtn.classList.add('lc-selected');
 }
 
 async function tagContact(temp){
   const c=csContacts[csIndex];
   csCounts[temp]++;
+  const lastTouchedDate=new Date();
+  lastTouchedDate.setDate(lastTouchedDate.getDate()-csLastContactedDays);
   try{
     await sb.from('agent_contacts').insert([{
       agent_name:csCurrentAgent,
@@ -1785,7 +1813,7 @@ async function tagContact(temp){
       email:c.email,
       temperature:temp,
       tagged_at:new Date().toISOString(),
-      last_touched:new Date().toISOString(),
+      last_touched:lastTouchedDate.toISOString(),
       touch_count:1
     }]);
   }catch(e){}
