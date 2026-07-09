@@ -411,7 +411,6 @@ body.light .quote-bar{color:#fff}
       <button class="nav-item" onclick="switchView('textgen',this)">💬 Text generator</button>
       <button class="nav-item" onclick="switchView('buyer',this)">🏠 Buyer questionnaire</button>
       <button class="nav-item" onclick="switchView('seller',this)">📋 Seller questionnaire</button>
-      <button class="nav-item" onclick="switchView('leadprotocol',this)">🌡️ Lead protocol</button>
       <div class="nav-section">Plan</div>
       <button class="nav-item" onclick="switchView('contactsort',this)">📱 Sort my contacts</button>
       <button class="nav-item" onclick="switchView('leadprotocol',this)">🌡️ Lead protocol</button>
@@ -938,90 +937,6 @@ body.light .quote-bar{color:#fff}
       </div>
     </div>
 
-    <!-- LEAD PROTOCOL -->
-    <div id="view-leadprotocol" class="view">
-      <div class="page-title">Lead protocol</div>
-      <div class="page-sub">Every lead gets a temperature. Every temperature gets a plan. No lead falls through the cracks.</div>
-
-      <div class="card" style="margin-bottom:16px;border-left:4px solid var(--red)">
-        <div class="card-header">
-          <span class="card-title">🔥 Hot lead</span>
-          <span class="badge b-fire">Act within 5 minutes</span>
-        </div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">Ready to move now. Motivated, has a timeline under 60 days, actively looking or actively selling.</div>
-        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Signs of a hot lead</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.9;margin-bottom:14px">
-          • Says they need to move in the next 30-60 days<br>
-          • Pre-approved or ready to get pre-approved immediately<br>
-          • Already has a home to sell and needs to buy<br>
-          • Referred by a past client with urgency<br>
-          • Actively touring homes or has toured recently
-        </div>
-        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">What to do</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.9">
-          1. Respond within 5 minutes — speed to lead wins the deal<br>
-          2. Call, don't text first — get them on the phone<br>
-          3. Book the appointment same call if possible<br>
-          4. Get pre-approval started immediately if buying<br>
-          5. Follow up same day with next steps in writing
-        </div>
-      </div>
-
-      <div class="card" style="margin-bottom:16px;border-left:4px solid var(--amber)">
-        <div class="card-header">
-          <span class="card-title">🌤️ Warm lead</span>
-          <span class="badge b-push">Act within 24 hours</span>
-        </div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">Interested, but no urgency. Thinking about it, exploring options, timeline is 3-6 months out.</div>
-        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Signs of a warm lead</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.9;margin-bottom:14px">
-          • Says they're "starting to think about" buying or selling<br>
-          • Timeline is 3-6 months away<br>
-          • Asking questions but hasn't committed to next steps<br>
-          • Past client checking in about the market<br>
-          • Referral with no specific urgency mentioned
-        </div>
-        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">What to do</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.9">
-          1. Personal outreach within 24 hours — call or text, not email<br>
-          2. Qualify: ask about timeline, motivation, and financing<br>
-          3. Add to weekly follow-up cadence — don't let them go cold<br>
-          4. Send relevant market info or listings to build value<br>
-          5. Goal is to move them to a consultation or appointment
-        </div>
-      </div>
-
-      <div class="card" style="margin-bottom:16px;border-left:4px solid var(--blue)">
-        <div class="card-header">
-          <span class="card-title">❄️ Cold lead</span>
-          <span class="badge" style="background:var(--blue-bg);color:var(--blue)">Long-term nurture</span>
-        </div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">No immediate relationship or intent. Someone in your database, a cold contact, or someone who hasn't engaged in a while.</div>
-        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Signs of a cold lead</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.9;margin-bottom:14px">
-          • No specific timeline or reason to move<br>
-          • Hasn't responded to recent outreach<br>
-          • New contact with no established relationship<br>
-          • Database contact you haven't touched in months<br>
-          • Someone "just looking" with no real motivation yet
-        </div>
-        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">What to do</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.9">
-          1. Add to database, tag as cold — don't force urgency that isn't there<br>
-          2. Nurture monthly — value touches, not sales pressure<br>
-          3. Share market updates, local content, or a genuine check-in<br>
-          4. Never mix a check-in with a business ask — build trust first<br>
-          5. Goal is staying top of mind until they warm up naturally
-        </div>
-      </div>
-
-      <div class="card" style="background:var(--navy);border:1px solid rgba(201,168,76,.25)">
-        <div class="card-header"><span class="card-title" style="color:var(--gold)">The rule</span></div>
-        <div style="font-size:14px;color:#fff;line-height:1.8">
-          Every lead you touch gets tagged hot, warm, or cold — no exceptions. Speed matters most for hot leads. Consistency matters most for warm and cold leads. A lead that falls through the cracks is a closing you lost before you ever had a chance to earn it.
-        </div>
-      </div>
-    </div>
 
     <!-- REVIEWS -->
     <div id="view-reviews" class="view">
