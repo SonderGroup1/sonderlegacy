@@ -132,6 +132,11 @@ body.light .toggle-thumb{transform:translateX(12px)}
 .stat-card.hi .stat-value{color:var(--gold)}
 .stat-sub{font-size:11px;color:var(--hint);margin-top:4px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.field-grp{margin-bottom:14px}
+.field-grp label{display:block;font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px}
+.field-grp input,.field-grp textarea{width:100%;padding:11px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none}
+.field-grp input:focus,.field-grp textarea:focus{border-color:var(--gold)}
+.field-grp textarea{resize:vertical;min-height:70px;line-height:1.5}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .card-title{font-size:15px;font-weight:500;color:var(--text)}
 .card-sub{font-size:12px;color:var(--muted)}
@@ -642,6 +647,10 @@ body.light .quote-bar{color:#fff}
     <div id="view-goals" class="view">
       <div class="page-title">90-day goals</div>
       <div class="page-sub">Sonder Legacy · Utah market · $500k avg sale price</div>
+
+      <!-- QUARTERLY CHECK-IN -->
+      <div id="quarterly-checkin" style="margin-bottom:16px"></div>
+
       <div class="card">
         <div class="card-header"><span class="card-title">Daily minimums — non-negotiable</span></div>
         <div class="min-grid">
@@ -1415,6 +1424,148 @@ async function toggleCalendarDay(dayKey){
   renderCalendar();
 }
 
+// ── QUARTERLY CHECK-IN ───────────────────────────────────────────
+const QUARTER_STARTS=[
+  {q:'Q1',month:0,day:1},
+  {q:'Q2',month:3,day:1},
+  {q:'Q3',month:6,day:1},
+  {q:'Q4',month:9,day:1},
+];
+
+function getQuarterInfo(){
+  const now=new Date();
+  const year=now.getFullYear();
+  let currentQ=null,currentStart=null,nextStart=null;
+  for(let i=0;i<4;i++){
+    const start=new Date(year,QUARTER_STARTS[i].month,QUARTER_STARTS[i].day);
+    const end=i<3?new Date(year,QUARTER_STARTS[i+1].month,QUARTER_STARTS[i+1].day):new Date(year+1,0,1);
+    if(now>=start&&now<end){
+      currentQ=QUARTER_STARTS[i].q+' '+year;
+      currentStart=start;
+      nextStart=end;
+    }
+  }
+  // Window opens 7 days before next quarter start
+  const windowOpen=new Date(nextStart);
+  windowOpen.setDate(windowOpen.getDate()-7);
+  const isWindowOpen=now>=windowOpen&&now<nextStart;
+  const nextQIndex=QUARTER_STARTS.findIndex(x=>x.q+' '+year===currentQ)+1;
+  const nextQLabel=nextQIndex<4?QUARTER_STARTS[nextQIndex].q+' '+year:'Q1 '+(year+1);
+  return{currentQ,currentStart,nextStart,windowOpen,isWindowOpen,nextQLabel};
+}
+
+async function renderQuarterlyCheckin(){
+  const idx=currentAgent!=null?currentAgent:0;
+  const a=agents[idx];
+  const el=document.getElementById('quarterly-checkin');
+  if(!el)return;
+
+  const qInfo=getQuarterInfo();
+  const{data}=await sb.from('agent_intake').select('*').eq('agent_name',a.name).order('submitted_at',{ascending:false});
+  const history=data||[];
+  const alreadySubmittedThisQuarter=history.some(h=>h.quarter_label===qInfo.nextQLabel);
+
+  if(qInfo.isWindowOpen&&!alreadySubmittedThisQuarter){
+    // Window is open — show the form
+    el.innerHTML=`
+      <div class="card" style="border:1px solid var(--gold);background:var(--gold-bg)">
+        <div class="card-header"><span class="card-title" style="color:var(--gold)">Your ${qInfo.nextQLabel} goal check-in is open</span></div>
+        <div style="font-size:13px;color:var(--text);margin-bottom:16px;line-height:1.6">Set your goals for the upcoming quarter. Be honest — this builds your personal roadmap.</div>
+        <div id="qc-form"></div>
+      </div>`;
+    renderQuarterlyForm(idx,qInfo.nextQLabel);
+  } else if(alreadySubmittedThisQuarter){
+    el.innerHTML=`
+      <div class="card" style="border-left:3px solid var(--teal)">
+        <div style="font-size:13px;color:var(--teal);font-weight:500">✓ ${qInfo.nextQLabel} goals submitted. Next check-in opens ${qInfo.nextStart?new Date(qInfo.nextStart.getFullYear(),qInfo.nextStart.getMonth()+3,qInfo.nextStart.getDate()-7).toLocaleDateString('en-US',{month:'long',day:'numeric'}):''}.</div>
+      </div>`;
+  } else {
+    const daysUntil=Math.ceil((qInfo.windowOpen-new Date())/86400000);
+    el.innerHTML=`
+      <div class="card" style="opacity:.6;border-left:3px solid var(--border2)">
+        <div style="font-size:13px;color:var(--muted)">🔒 Your ${qInfo.nextQLabel} goal check-in opens <strong style="color:var(--text)">${qInfo.windowOpen.toLocaleDateString('en-US',{month:'long',day:'numeric'})}</strong> (${daysUntil} day${daysUntil===1?'':'s'} away)</div>
+      </div>`;
+  }
+
+  // Show history if any exists
+  if(history.length>0){
+    const histHtml=`
+      <div class="card" style="margin-top:12px">
+        <div class="card-header"><span class="card-title">Your goal history</span></div>
+        ${history.map(h=>`
+          <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:500;color:var(--text)">${h.quarter_label||'—'}</span>
+              <span style="font-size:12px;color:var(--muted)">${new Date(h.submitted_at).toLocaleDateString()}</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted)">Goal: ${h.income_goal||'—'} · ${h.closings_goal||'—'} closings</div>
+          </div>`).join('')}
+      </div>`;
+    el.innerHTML+=histHtml;
+  }
+}
+
+function renderQuarterlyForm(idx,quarterLabel){
+  const el=document.getElementById('qc-form');
+  if(!el)return;
+  el.innerHTML=`
+    <div class="field-grp">
+      <label>Income goal for ${quarterLabel}</label>
+      <input type="text" id="qc-income" placeholder="e.g. $25,000">
+    </div>
+    <div class="field-grp">
+      <label>Closings goal</label>
+      <input type="number" id="qc-closings" placeholder="e.g. 2">
+    </div>
+    <div class="field-grp">
+      <label>Average sale price</label>
+      <input type="text" id="qc-avgprice" placeholder="e.g. $500,000">
+    </div>
+    <div class="field-grp">
+      <label>Top lead sources right now</label>
+      <input type="text" id="qc-leadsources" placeholder="e.g. SOI, referrals, open houses">
+    </div>
+    <div class="field-grp">
+      <label>Database size (approx)</label>
+      <input type="number" id="qc-database" placeholder="e.g. 150">
+    </div>
+    <div class="field-grp">
+      <label>#1 goal this quarter</label>
+      <textarea id="qc-topgoal" placeholder="Be specific — what does winning look like?"></textarea>
+    </div>
+    <div class="field-grp">
+      <label>Biggest obstacle right now</label>
+      <textarea id="qc-obstacle" placeholder="Be honest — this helps us help you."></textarea>
+    </div>
+    <div id="qc-error" style="color:var(--red);font-size:13px;margin-top:8px;display:none">Please fill out all fields.</div>
+    <button class="submit-btn" style="width:100%;margin-top:8px" onclick="submitQuarterly(${idx},'${quarterLabel}')">Submit ${quarterLabel} goals</button>`;
+}
+
+async function submitQuarterly(idx,quarterLabel){
+  const a=agents[idx];
+  const fields={
+    agent_name:a.name,
+    quarter_label:quarterLabel,
+    income_goal:document.getElementById('qc-income').value.trim(),
+    closings_goal:document.getElementById('qc-closings').value,
+    avg_sale_price:document.getElementById('qc-avgprice').value.trim(),
+    lead_sources:document.getElementById('qc-leadsources').value.trim(),
+    database_size:document.getElementById('qc-database').value,
+    top_goal:document.getElementById('qc-topgoal').value.trim(),
+    biggest_obstacle:document.getElementById('qc-obstacle').value.trim(),
+    submitted_at:new Date().toISOString()
+  };
+  const errEl=document.getElementById('qc-error');
+  if(!fields.income_goal||!fields.closings_goal||!fields.top_goal||!fields.biggest_obstacle){
+    errEl.style.display='block';
+    return;
+  }
+  errEl.style.display='none';
+  await sb.from('agent_intake').insert([fields]);
+  await loadIntakeData(idx);
+  renderQuarterlyCheckin();
+}
+
 // ── WEEKLY DEBRIEF ───────────────────────────────────────────────
 async function generateDebrief(){
   const btn=document.getElementById('debrief-btn');
@@ -1900,6 +2051,7 @@ function switchView(v,btn){
   if(v==='kpi')initKPISelector();
   if(v==='kpiteam')renderKPITeam();
   if(v==='calendar')renderCalendar();
+  if(v==='goals')renderQuarterlyCheckin();
   // Close mobile sidebar after navigating
   if(window.innerWidth<=860)closeSidebar();
   window.scrollTo(0,0);
