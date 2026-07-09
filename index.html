@@ -399,6 +399,7 @@ body.light .quote-bar{color:#fff}
     <nav class="nav">
       <div class="nav-section">Overview</div>
       <button class="nav-item active" onclick="switchView('broker',this)">📊 Team dashboard</button>
+      <button class="nav-item" onclick="switchView('debrief',this)">🗓️ Weekly debrief</button>
       <div class="nav-section">Agents</div>
       <button class="nav-item" onclick="switchView('agent',this);selectAgent(0)">👤 Kevin <span class="nav-dot" id="dot-0" style="background:#c9a84c"></span></button>
       <button class="nav-item" onclick="switchView('agent',this);selectAgent(1)">👤 Steven <span class="nav-dot" id="dot-1" style="background:#2dd4a0"></span></button>
@@ -737,6 +738,19 @@ body.light .quote-bar{color:#fff}
         <div class="card-header"><span class="card-title">📚 Idea bank — rotate these in</span></div>
         <div style="display:grid;gap:10px" id="idea-bank"></div>
       </div>
+    </div>
+
+    <!-- WEEKLY DEBRIEF -->
+    <div id="view-debrief" class="view">
+      <div class="page-title">Weekly debrief</div>
+      <div class="page-sub">A sharp, honest look at the team's week. Check it anytime — not just Sunday.</div>
+
+      <div class="card" style="margin-bottom:16px;text-align:center;padding:24px">
+        <button class="submit-btn" style="width:auto;padding:14px 32px" onclick="generateDebrief()" id="debrief-btn">Generate this week's debrief</button>
+        <div style="font-size:12px;color:var(--muted);margin-top:10px" id="debrief-status"></div>
+      </div>
+
+      <div id="debrief-content"></div>
     </div>
 
     <!-- CONTACT SORTER -->
@@ -1400,6 +1414,111 @@ async function toggleCalendarDay(dayKey){
   }
   renderCalendar();
 }
+
+// ── WEEKLY DEBRIEF ───────────────────────────────────────────────
+async function generateDebrief(){
+  const btn=document.getElementById('debrief-btn');
+  const statusEl=document.getElementById('debrief-status');
+  const contentEl=document.getElementById('debrief-content');
+  btn.disabled=true;
+  btn.textContent='Generating...';
+  statusEl.textContent='Pulling this week\'s activity data...';
+  contentEl.innerHTML='';
+
+  try{
+    const today=new Date();
+    const weekAgo=new Date(today);
+    weekAgo.setDate(weekAgo.getDate()-7);
+    const weekAgoStr=weekAgo.toISOString().split('T')[0];
+
+    const{data:weekData}=await sb.from('daily_activity').select('*').gte('date',weekAgoStr);
+    const rows_all=Array.isArray(weekData)?weekData:[];
+
+    const MINS={calls:20,convos:5,followups:5,refs:5};
+    const agentStats=agents.map(a=>{
+      const rows=rows_all.filter(r=>r.agent_name===a.name);
+      if(rows.length===0)return{name:a.name,noData:true};
+      const avg=key=>Math.round(rows.reduce((s,r)=>s+(r[key]||0),0)/rows.length);
+      const total=key=>rows.reduce((s,r)=>s+(r[key]||0),0);
+      const last=rows[rows.length-1];
+      const avgCalls=avg('calls'),avgConvos=avg('convos'),avgFollowups=avg('followups'),avgRefs=avg('refs');
+      const totalAppts=total('appts');
+      const daysSubmitted=rows.filter(r=>r.submitted).length;
+      const storiesDone=rows.filter(r=>r.story).length;
+      return{
+        name:a.name,daysSubmitted,storiesDone,avgCalls,avgConvos,avgFollowups,avgRefs,totalAppts,
+        activeListings:last?.active_listings||0,activeBuyers:last?.active_buyers||0,closings:last?.closings||0,
+        noData:false
+      };
+    });
+
+    statusEl.textContent='Writing the debrief...';
+
+    const statsText=agentStats.map(s=>{
+      if(s.noData)return`${s.name}: No data logged this week.`;
+      return`${s.name}:
+- Days submitted: ${s.daysSubmitted}/7
+- Avg daily calls: ${s.avgCalls} (min: 20) — ${s.avgCalls>=MINS.calls?'MET':'MISSED'}
+- Avg daily convos: ${s.avgConvos} (min: 5) — ${s.avgConvos>=MINS.convos?'MET':'MISSED'}
+- Avg daily follow-ups: ${s.avgFollowups} (min: 5) — ${s.avgFollowups>=MINS.followups?'MET':'MISSED'}
+- Avg daily referrals asked: ${s.avgRefs} (min: 5) — ${s.avgRefs>=MINS.refs?'MET':'MISSED'}
+- Stories posted: ${s.storiesDone}/7 days
+- Appointments set: ${s.totalAppts}
+- Active listings: ${s.activeListings}
+- Active buyers: ${s.activeBuyers}
+- Closings: ${s.closings}`;
+    }).join('\n\n');
+
+    const prompt=`You are a sharp, direct real estate team coach writing a weekly performance debrief for Kevin and Steven, the team leads at Sonder Legacy in Utah.
+
+Be direct, data-driven, and honest. Write like a coach who genuinely cares — not corporate, not fluffy, but real.
+
+CRITICAL RULE: Do not use any emojis anywhere in this response. Plain text only.
+
+Here is this week's data:
+
+${statsText}
+
+Daily minimums: 20 calls, 5 conversations, 5 follow-ups, 5 referrals asked per day.
+Weekly goals: 3-5 appointments, 1 story/day, consistent submission.
+
+Write a debrief with these exact section headers (use ## for headers):
+## Team Summary
+2-3 sentences — overall week, tone, standouts.
+
+## Agent Breakdown
+One subsection per agent (use ### for each agent name) with what they crushed, what they missed, any patterns, and ONE specific Monday morning action item. 4-6 sentences each.
+
+## Monday Morning Priorities
+A ranked list of who needs attention first and why.
+
+Be specific with numbers. Don't sugarcoat. Don't be mean. No emojis anywhere.`;
+
+    const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:2000,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    let debrief=data.content.map(b=>b.text||'').join('').trim();
+    debrief=debrief.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'');
+
+    const weekRange=`${weekAgo.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${today.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+
+    let html=debrief
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/^## (.*?)$/gm,'</div></div><div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title">$1</span></div><div style="font-size:14px;color:var(--text);line-height:1.8">')
+      .replace(/^### (.*?)$/gm,'<div style="font-size:15px;font-weight:600;color:var(--gold);margin:16px 0 6px">$1</div>')
+      .replace(/\n\n/g,'<br><br>')
+      .replace(/\n/g,'<br>');
+    html='<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Week of '+weekRange+'</div><div>'+html+'</div></div>';
+
+    contentEl.innerHTML=html;
+    statusEl.textContent='Generated '+new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  }catch(e){
+    statusEl.textContent='Something went wrong. Please try again.';
+  }
+  btn.disabled=false;
+  btn.textContent='Regenerate debrief';
+}
+
 let csContacts=[];
 let csIndex=0;
 let csCounts={cold:0,warm:0,hot:0};
