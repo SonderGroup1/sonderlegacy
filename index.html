@@ -797,7 +797,10 @@ body.light .quote-bar{color:#fff}
         <div id="cs-swipe-wrap" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
             <div style="font-size:13px;color:var(--muted)"><span id="cs-progress">0 / 0</span> tagged</div>
-            <button class="nav-item" style="width:auto;padding:6px 14px;font-size:12px" onclick="resetContactSort()">Start over</button>
+            <div style="display:flex;gap:8px">
+              <button class="nav-item" style="width:auto;padding:6px 14px;font-size:12px" onclick="goBackContact()" id="cs-back-btn">← Back</button>
+              <button class="nav-item" style="width:auto;padding:6px 14px;font-size:12px" onclick="resetContactSort()">Start over</button>
+            </div>
           </div>
 
           <div id="cs-card-wrap" style="text-align:center">
@@ -1716,6 +1719,7 @@ let csIndex=0;
 let csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
 let csCurrentAgent=null;
 let csLastContactedDays=0;
+let csHistory=[];
 
 function setLastContacted(days,btn){
   csLastContactedDays=days;
@@ -1773,6 +1777,7 @@ function handleVcfUpload(event){
     csContacts=parsed;
     csIndex=0;
     csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
+    csHistory=[];
     statusEl.textContent=`Loaded ${parsed.length} contacts`;
     document.getElementById('cs-howto').style.display='none';
     document.getElementById('cs-upload-card').style.display='none';
@@ -1793,6 +1798,11 @@ function showCurrentContact(){
   document.getElementById('cs-name').textContent=c.name;
   document.getElementById('cs-phone').textContent=c.phone||c.email||'No phone or email';
   document.getElementById('cs-progress').textContent=`${csIndex} / ${csContacts.length}`;
+  const backBtn=document.getElementById('cs-back-btn');
+  if(backBtn){
+    backBtn.style.opacity=csHistory.length>0?'1':'.4';
+    backBtn.style.pointerEvents=csHistory.length>0?'auto':'none';
+  }
   // Reset last-contacted selector to "Today" for each new contact
   csLastContactedDays=0;
   document.querySelectorAll('.lc-btn').forEach(b=>b.classList.remove('lc-selected'));
@@ -1806,7 +1816,7 @@ async function tagContact(temp){
   const lastTouchedDate=new Date();
   lastTouchedDate.setDate(lastTouchedDate.getDate()-csLastContactedDays);
   try{
-    await sb.from('agent_contacts').insert([{
+    const{data}=await sb.from('agent_contacts').insert([{
       agent_name:csCurrentAgent,
       contact_name:c.name,
       phone:c.phone,
@@ -1815,9 +1825,23 @@ async function tagContact(temp){
       tagged_at:new Date().toISOString(),
       last_touched:lastTouchedDate.toISOString(),
       touch_count:1
-    }]);
+    }]).select();
+    if(data&&data[0]){
+      csHistory.push({index:csIndex,temp:temp,rowId:data[0].id});
+    }
   }catch(e){}
   csIndex++;
+  showCurrentContact();
+}
+
+async function goBackContact(){
+  if(csHistory.length===0)return;
+  const last=csHistory.pop();
+  csCounts[last.temp]=Math.max(0,csCounts[last.temp]-1);
+  try{
+    await sb.from('agent_contacts').delete().eq('id',last.rowId);
+  }catch(e){}
+  csIndex=last.index;
   showCurrentContact();
 }
 
@@ -1839,6 +1863,7 @@ function resetContactSort(){
   csContacts=[];
   csIndex=0;
   csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
+  csHistory=[];
   document.getElementById('cs-howto').style.display='block';
   document.getElementById('cs-upload-card').style.display='block';
   document.getElementById('cs-swipe-wrap').style.display='none';
