@@ -405,6 +405,7 @@ body.light .quote-bar{color:#fff}
     </div>
     <nav class="nav">
       <div class="nav-section">Overview</div>
+      <button class="nav-item" onclick="switchView('howto',this)">❓ How it works</button>
       <button class="nav-item active" onclick="switchView('broker',this)">📊 Team dashboard</button>
       <button class="nav-item" onclick="switchView('debrief',this)">🗓️ Weekly debrief</button>
       <div class="nav-section">Agents</div>
@@ -872,6 +873,96 @@ body.light .quote-bar{color:#fff}
           </div>
         </div>
         <div id="cs-list-content"></div>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div id="view-howto" class="view">
+      <div class="page-title">How it works</div>
+      <div class="page-sub">A plain-English guide to every part of this CRM. No jargon, just what to do.</div>
+
+      <div class="card" style="margin-bottom:16px;background:var(--navy);border:1px solid rgba(201,168,76,.3)">
+        <div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.7">
+          💡 <strong style="color:#fff">The short version:</strong> Log your daily numbers every day. Touch your hot leads when the app tells you to. Post your content on Mon/Wed/Fri. Fill out your 90-day goals when the window opens. That's 90% of it.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">👤 Logging in</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          Tap your name on the login screen, then enter your 4-digit pin. First time logging in? You'll create your own pin — just remember it, nobody else can see it.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">📞 Your daily activity log</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          Every day, log your calls, conversations, follow-ups, and referrals asked. Check the boxes for Send homes, Show homes, Under contract update, and Listings update if you did them. Tap Submit my day when you're done. Do this every single day — it's what everything else in the app is built on.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">📈 My KPI dashboard</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          This shows you exactly what you need to do daily to hit YOUR income goal — not just the team minimum. Green means you're on track, red means you're behind. Fill out your 90-day goal form and this updates automatically with your real numbers.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">🎯 90-day goals</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          Once a quarter, a form unlocks here where you set your income goal and a few other numbers. It's locked the rest of the time — you'll see a countdown until it opens. Fill it out honestly, it's what builds your personal roadmap.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">📱 Sort my contacts</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          <strong>Import tab:</strong> Export your contacts from your iPhone (instructions are right there), upload the file, and go through them one by one — Cold, Warm, Hot, or Closed.<br><br>
+          <strong>My contacts tab:</strong> See your full list. When someone's overdue for a touch, their card turns red and says "TOUCH ME" — tap it and the AI writes a text for you. Copy it, send it, tap "I sent it" and you're done.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">🌡️ Lead protocol</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          A reference guide for how fast to respond and what to do based on whether a lead is Cold, Warm, or Hot. Check it anytime you're not sure how to handle someone.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">📅 Content calendar</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          Shows this week's 3 Reel topics — Monday, Wednesday, Friday — with example ideas for each. Check the box when you post. Post a story every day too, even if it's not on the calendar.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">✨ Post generator & 💬 Text generator</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          Need a caption for a post or a text to send someone? Answer a few quick questions and the AI writes it for you in seconds. Copy it, tweak it if you want, and send it.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">🏠 Buyer & 📋 Seller questionnaires</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          Simple question sets to run through with a buyer or seller — helps you understand what they actually need before you start showing homes or listing.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">⭐ Reviews & 📚 Books</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          Reviews: grab the review link and script to send past clients. Books: add a book you're reading and it shows up on the team home screen for everyone to see.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:32px">
+        <div class="card-header"><span class="card-title">🗓️ Weekly debrief (Kevin & Steven only)</span></div>
+        <div style="font-size:13px;color:var(--text);line-height:1.8">
+          Tap Generate anytime to get an honest, data-driven breakdown of how the whole team performed that week — who's crushing it, who needs a conversation, and what to focus on Monday morning.
+        </div>
       </div>
     </div>
 
