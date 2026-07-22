@@ -1036,18 +1036,18 @@ body.light .quote-bar{color:#fff}
 
         <!-- Step 2b: Text flow -->
         <div id="touch-modal-text-flow" style="display:none">
-          <div id="touch-modal-loading" style="text-align:center;padding:24px 0">
-            <div style="font-size:13px;color:var(--muted)">Writing a text...</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Write something real. It's better coming from you.</div>
+          <textarea id="touch-modal-textarea" placeholder="What do you want to say to them?" style="width:100%;min-height:100px;padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;line-height:1.6;resize:vertical;margin-bottom:10px"></textarea>
+
+          <button class="nav-item" style="width:100%;margin-bottom:14px;font-size:12px" onclick="requestAiHelp()" id="touch-ai-help-btn">✨ If you're stuck — give me a starting point</button>
+
+          <div id="touch-ai-loading" style="display:none;text-align:center;padding:10px 0;font-size:12px;color:var(--muted)">Writing a starting point...</div>
+
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <button class="submit-btn" style="flex:1" onclick="copyTouchText()" id="touch-copy-btn">📋 Copy & open Messages</button>
           </div>
-          <div id="touch-modal-content" style="display:none">
-            <div style="background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:16px;font-size:14px;color:var(--text);line-height:1.6" id="touch-modal-text"></div>
-            <div style="display:flex;gap:8px;margin-bottom:10px">
-              <button class="submit-btn" style="flex:1" onclick="copyTouchText()" id="touch-copy-btn">📋 Copy & open Messages</button>
-              <button class="nav-item" style="width:auto;padding:12px 16px" onclick="regenerateTouchText()">🔄</button>
-            </div>
-            <button class="nav-item" style="width:100%;margin-bottom:10px" onclick="backToChoice()">← Back</button>
-            <button class="submit-btn" style="width:100%" onclick="confirmTouchLogged('text')">✓ I sent it — log it</button>
-          </div>
+          <button class="nav-item" style="width:100%;margin-bottom:10px" onclick="backToChoice()">← Back</button>
+          <button class="submit-btn" style="width:100%" onclick="confirmTouchLogged('text')">✓ I sent it — log it</button>
         </div>
       </div>
     </div>
@@ -1900,6 +1900,8 @@ let csHistory=[];
 let csBatchStart=0;
 let csBatchSize=25;
 let csBatchEnd=0;
+let csFullUploadCount=0;
+let csAlreadyDoneCount=0;
 
 function setLastContacted(days,btn){
   csLastContactedDays=days;
@@ -1922,14 +1924,10 @@ function switchCsTab(tab,btn){
   document.getElementById('cs-tab-import').style.display=tab==='import'?'block':'none';
   document.getElementById('cs-tab-mylist').style.display=tab==='mylist'?'block':'none';
   if(tab==='mylist')renderContactList();
-  if(tab==='import'){
-    const saved=loadCsProgress();
-    if(saved&&saved.position<saved.contacts.length){
-      csContacts=saved.contacts;
-      document.getElementById('cs-howto').style.display='none';
-      document.getElementById('cs-upload-card').style.display='none';
-      showBatchChooser();
-    }
+  if(tab==='import'&&csContacts.length===0){
+    document.getElementById('cs-howto').style.display='block';
+    document.getElementById('cs-upload-card').style.display='block';
+    document.getElementById('cs-batch-chooser').style.display='none';
   }
 }
 
@@ -1957,18 +1955,22 @@ function handleVcfUpload(event){
   const statusEl=document.getElementById('cs-upload-status');
   statusEl.textContent='Reading contacts...';
   const reader=new FileReader();
-  reader.onload=function(e){
+  reader.onload=async function(e){
     const parsed=parseVcf(e.target.result);
     if(parsed.length===0){
       statusEl.textContent='No contacts found in that file. Try again.';
       return;
     }
     csCurrentAgent=agents[currentAgent]?agents[currentAgent].name:'Kevin';
-    csContacts=parsed;
+    statusEl.textContent='Checking what you\'ve already sorted...';
+    // Pull every contact this agent has already tagged, so we can skip them
+    const{data:already}=await sb.from('agent_contacts').select('contact_name,phone').eq('agent_name',csCurrentAgent);
+    const alreadySet=new Set((already||[]).map(a=>(a.contact_name||'').trim().toLowerCase()+'|'+(a.phone||'').trim()));
+    const remaining=parsed.filter(c=>!alreadySet.has((c.name||'').trim().toLowerCase()+'|'+(c.phone||'').trim()));
+    csContacts=remaining;
     csHistory=[];
-    // Save the full list + start position to localStorage so progress survives across sessions
-    const storageKey='cs-progress-'+csCurrentAgent;
-    localStorage.setItem(storageKey,JSON.stringify({contacts:parsed,position:0}));
+    csFullUploadCount=parsed.length;
+    csAlreadyDoneCount=parsed.length-remaining.length;
     statusEl.textContent=`Loaded ${parsed.length} contacts`;
     document.getElementById('cs-howto').style.display='none';
     document.getElementById('cs-upload-card').style.display='none';
@@ -1977,46 +1979,26 @@ function handleVcfUpload(event){
   reader.readAsText(file);
 }
 
-function getCsStorageKey(){
-  csCurrentAgent=agents[currentAgent]?agents[currentAgent].name:'Kevin';
-  return'cs-progress-'+csCurrentAgent;
-}
-
-function loadCsProgress(){
-  const saved=localStorage.getItem(getCsStorageKey());
-  if(saved){
-    try{return JSON.parse(saved);}catch(e){return null;}
-  }
-  return null;
-}
-
 function showBatchChooser(){
-  const saved=loadCsProgress();
-  const total=saved?saved.contacts.length:csContacts.length;
-  const position=saved?saved.position:0;
-  const remaining=total-position;
-
+  const remaining=csContacts.length;
   document.getElementById('cs-batch-chooser').style.display='block';
   document.getElementById('cs-swipe-wrap').style.display='none';
   document.getElementById('cs-summary').style.display='none';
 
-  document.getElementById('cs-batch-remaining').textContent=
-    position>0
-      ? `${remaining} contacts left to sort (${position} done already)`
-      : `${remaining} contacts to sort`;
+  if(remaining===0){
+    document.getElementById('cs-batch-remaining').textContent='You\'ve sorted everyone in this file!';
+  } else if(csAlreadyDoneCount>0){
+    document.getElementById('cs-batch-remaining').textContent=`${remaining} contacts left to sort (${csAlreadyDoneCount} done already)`;
+  } else {
+    document.getElementById('cs-batch-remaining').textContent=`${remaining} contacts to sort`;
+  }
 }
 
 function startBatch(size){
-  const saved=loadCsProgress();
-  if(saved){
-    csContacts=saved.contacts;
-    csBatchStart=saved.position;
-  } else {
-    csBatchStart=0;
-  }
-  csIndex=csBatchStart;
-  csBatchSize=size===0?csContacts.length-csBatchStart:size; // 0 = sort all remaining
-  csBatchEnd=Math.min(csBatchStart+csBatchSize,csContacts.length);
+  csBatchStart=0;
+  csIndex=0;
+  csBatchSize=size===0?csContacts.length:size; // 0 = sort all remaining
+  csBatchEnd=Math.min(csBatchSize,csContacts.length);
   csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
   csHistory=[];
   document.getElementById('cs-batch-chooser').style.display='none';
@@ -2048,10 +2030,6 @@ function showCurrentContact(){
   if(todayBtn)todayBtn.classList.add('lc-selected');
 }
 
-function saveCsPosition(){
-  localStorage.setItem(getCsStorageKey(),JSON.stringify({contacts:csContacts,position:csIndex}));
-}
-
 async function tagContact(temp){
   const c=csContacts[csIndex];
   csCounts[temp]++;
@@ -2073,7 +2051,6 @@ async function tagContact(temp){
     }
   }catch(e){}
   csIndex++;
-  saveCsPosition();
   showCurrentContact();
 }
 
@@ -2085,13 +2062,11 @@ async function goBackContact(){
     await sb.from('agent_contacts').delete().eq('id',last.rowId);
   }catch(e){}
   csIndex=last.index;
-  saveCsPosition();
   showCurrentContact();
 }
 
 function skipContact(){
   csIndex++;
-  saveCsPosition();
   showCurrentContact();
 }
 
@@ -2102,11 +2077,14 @@ function finishContactSort(){
   document.getElementById('cs-count-warm').textContent=csCounts.warm;
   document.getElementById('cs-count-hot').textContent=csCounts.hot;
   document.getElementById('cs-count-closed').textContent=csCounts.closed;
-  const remaining=csContacts.length-csIndex;
+  // Trim off everyone just processed so "Sort another batch" continues cleanly
+  csAlreadyDoneCount+=csIndex;
+  csContacts=csContacts.slice(csIndex);
+  const remaining=csContacts.length;
   const summaryNote=document.getElementById('cs-summary-remaining');
   if(summaryNote){
     summaryNote.textContent=remaining>0
-      ?`${remaining} contact${remaining===1?'':'s'} still left. Come back anytime — your spot is saved.`
+      ?`${remaining} contact${remaining===1?'':'s'} still left. Come back anytime — nothing you've done is lost.`
       :`That's everyone! Your whole list is sorted.`;
   }
 }
@@ -2116,7 +2094,6 @@ function resetContactSort(){
   csIndex=0;
   csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
   csHistory=[];
-  localStorage.removeItem(getCsStorageKey());
   document.getElementById('cs-howto').style.display='block';
   document.getElementById('cs-upload-card').style.display='block';
   document.getElementById('cs-batch-chooser').style.display='none';
@@ -2253,35 +2230,40 @@ async function chooseTouchMethod(method){
     document.getElementById('touch-modal-call').style.display='block';
   } else {
     document.getElementById('touch-modal-text-flow').style.display='block';
-    document.getElementById('touch-modal-loading').style.display='block';
-    document.getElementById('touch-modal-content').style.display='none';
-    await generateTouchText(touchModalContactName,touchModalTemperature,touchModalDays);
+    document.getElementById('touch-modal-textarea').value='';
+    document.getElementById('touch-ai-loading').style.display='none';
+    document.getElementById('touch-ai-help-btn').style.display='block';
   }
 }
 
-async function generateTouchText(name,temperature,days){
-  const promptFn=TOUCH_PROMPTS[temperature]||TOUCH_PROMPTS.cold;
-  const prompt=promptFn(name,days)+`\n\nRules: No emojis. No "Hope you're doing well" or "Just checking in" clichés. Write ONLY the text message, no quotes, no explanation.`;
+async function requestAiHelp(){
+  const btn=document.getElementById('touch-ai-help-btn');
+  const loadingEl=document.getElementById('touch-ai-loading');
+  btn.style.display='none';
+  loadingEl.style.display='block';
+
+  const promptFn=TOUCH_PROMPTS[touchModalTemperature]||TOUCH_PROMPTS.cold;
+  const prompt=promptFn(touchModalContactName,touchModalDays)+`\n\nRules: No emojis. No "Hope you're doing well" or "Just checking in" clichés. Write ONLY the text message, no quotes, no explanation.`;
   try{
     const res=await fetch('/.netlify/functions/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:200,messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
-    touchModalGeneratedText=data.content.map(b=>b.text||'').join('').trim();
+    const generated=data.content.map(b=>b.text||'').join('').trim();
+    document.getElementById('touch-modal-textarea').value=generated;
   }catch(e){
-    touchModalGeneratedText='Something went wrong generating this text. Try regenerating.';
+    document.getElementById('touch-modal-textarea').placeholder='Something went wrong. Just write it yourself.';
   }
-  document.getElementById('touch-modal-text').textContent=touchModalGeneratedText;
-  document.getElementById('touch-modal-loading').style.display='none';
-  document.getElementById('touch-modal-content').style.display='block';
-}
-
-async function regenerateTouchText(){
-  document.getElementById('touch-modal-content').style.display='none';
-  document.getElementById('touch-modal-loading').style.display='block';
-  await generateTouchText(touchModalContactName,touchModalTemperature,touchModalDays);
+  loadingEl.style.display='none';
+  btn.style.display='block';
+  btn.textContent='✨ Try another starting point';
 }
 
 function copyTouchText(){
-  navigator.clipboard.writeText(touchModalGeneratedText).then(()=>{
+  const text=document.getElementById('touch-modal-textarea').value.trim();
+  if(!text){
+    document.getElementById('touch-modal-textarea').focus();
+    return;
+  }
+  navigator.clipboard.writeText(text).then(()=>{
     const btn=document.getElementById('touch-copy-btn');
     const original=btn.textContent;
     btn.textContent='✓ Copied!';
@@ -2289,7 +2271,7 @@ function copyTouchText(){
     // Open Messages app with the text pre-filled if we have a phone number
     if(touchModalContactPhone){
       const cleanPhone=touchModalContactPhone.replace(/[^\d+]/g,'');
-      window.location.href=`sms:${cleanPhone}${/iPhone|iPad|iPod/.test(navigator.userAgent)?'&':'?'}body=${encodeURIComponent(touchModalGeneratedText)}`;
+      window.location.href=`sms:${cleanPhone}${/iPhone|iPad|iPod/.test(navigator.userAgent)?'&':'?'}body=${encodeURIComponent(text)}`;
     }
   });
 }
