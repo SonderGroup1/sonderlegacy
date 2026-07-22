@@ -806,6 +806,29 @@ body.light .quote-bar{color:#fff}
           <div id="cs-upload-status" style="font-size:12px;color:var(--muted);margin-top:10px;text-align:center"></div>
         </div>
 
+        <div id="cs-batch-chooser" style="display:none">
+          <div class="card" style="text-align:center;padding:28px 20px">
+            <div style="font-size:32px;margin-bottom:10px">📇</div>
+            <div style="font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px" id="cs-batch-remaining">— contacts to sort</div>
+            <div style="font-size:13px;color:var(--muted);margin-bottom:22px">No need to do it all at once. Pick a chunk that fits your time right now.</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <button onclick="startBatch(15)" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:14px;font-weight:500;color:var(--text)">Quick — 15 contacts</span>
+                <span style="font-size:12px;color:var(--muted)">~10 min</span>
+              </button>
+              <button onclick="startBatch(50)" style="background:var(--gold-bg);border:1px solid var(--gold);border-radius:12px;padding:16px;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:14px;font-weight:500;color:var(--gold)">Standard — 50 contacts</span>
+                <span style="font-size:12px;color:var(--gold)">~30 min</span>
+              </button>
+              <button onclick="startBatch(0)" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:left;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:14px;font-weight:500;color:var(--text)">Everything left</span>
+                <span style="font-size:12px;color:var(--muted)">all in one go</span>
+              </button>
+            </div>
+            <button class="nav-item" style="width:100%;margin-top:14px" onclick="resetContactSort()">Start over with a new file</button>
+          </div>
+        </div>
+
         <div id="cs-swipe-wrap" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
             <div style="font-size:13px;color:var(--muted)"><span id="cs-progress">0 / 0</span> tagged</div>
@@ -861,16 +884,17 @@ body.light .quote-bar{color:#fff}
         <div id="cs-summary" style="display:none">
           <div class="card" style="text-align:center;padding:32px 24px">
             <div style="font-size:40px;margin-bottom:12px">✅</div>
-            <div style="font-size:20px;font-family:'DM Serif Display',serif;color:var(--text);margin-bottom:6px">All done!</div>
-            <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Your contacts are tagged and saved.</div>
+            <div style="font-size:20px;font-family:'DM Serif Display',serif;color:var(--text);margin-bottom:6px">Nice work!</div>
+            <div style="font-size:13px;color:var(--muted);margin-bottom:20px" id="cs-summary-remaining">Your contacts are tagged and saved.</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:20px">
               <div style="background:var(--blue-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--blue)" id="cs-count-cold">0</div><div style="font-size:10px;color:var(--muted)">Cold</div></div>
               <div style="background:var(--amber-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--amber)" id="cs-count-warm">0</div><div style="font-size:10px;color:var(--muted)">Warm</div></div>
               <div style="background:var(--red-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--red)" id="cs-count-hot">0</div><div style="font-size:10px;color:var(--muted)">Hot</div></div>
               <div style="background:var(--teal-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--teal)" id="cs-count-closed">0</div><div style="font-size:10px;color:var(--muted)">Closed</div></div>
             </div>
-            <button class="submit-btn" style="width:100%;margin-bottom:8px" onclick="resetContactSort()">Sort more contacts</button>
-            <button class="nav-item" style="width:100%" onclick="switchCsTab('mylist',document.querySelectorAll('#cs-tabs .agent-pill')[1])">View my contact list →</button>
+            <button class="submit-btn" style="width:100%;margin-bottom:8px" onclick="showBatchChooser()">Sort another batch</button>
+            <button class="nav-item" style="width:100%;margin-bottom:8px" onclick="switchCsTab('mylist',document.querySelectorAll('#cs-tabs .agent-pill')[1])">View my contact list →</button>
+            <button class="nav-item" style="width:100%" onclick="resetContactSort()">Start over with a new file</button>
           </div>
         </div>
       </div>
@@ -1873,6 +1897,9 @@ let csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
 let csCurrentAgent=null;
 let csLastContactedDays=0;
 let csHistory=[];
+let csBatchStart=0;
+let csBatchSize=25;
+let csBatchEnd=0;
 
 function setLastContacted(days,btn){
   csLastContactedDays=days;
@@ -1895,6 +1922,15 @@ function switchCsTab(tab,btn){
   document.getElementById('cs-tab-import').style.display=tab==='import'?'block':'none';
   document.getElementById('cs-tab-mylist').style.display=tab==='mylist'?'block':'none';
   if(tab==='mylist')renderContactList();
+  if(tab==='import'){
+    const saved=loadCsProgress();
+    if(saved&&saved.position<saved.contacts.length){
+      csContacts=saved.contacts;
+      document.getElementById('cs-howto').style.display='none';
+      document.getElementById('cs-upload-card').style.display='none';
+      showBatchChooser();
+    }
+  }
 }
 
 function parseVcf(text){
@@ -1927,30 +1963,79 @@ function handleVcfUpload(event){
       statusEl.textContent='No contacts found in that file. Try again.';
       return;
     }
+    csCurrentAgent=agents[currentAgent]?agents[currentAgent].name:'Kevin';
     csContacts=parsed;
-    csIndex=0;
-    csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
     csHistory=[];
+    // Save the full list + start position to localStorage so progress survives across sessions
+    const storageKey='cs-progress-'+csCurrentAgent;
+    localStorage.setItem(storageKey,JSON.stringify({contacts:parsed,position:0}));
     statusEl.textContent=`Loaded ${parsed.length} contacts`;
     document.getElementById('cs-howto').style.display='none';
     document.getElementById('cs-upload-card').style.display='none';
-    document.getElementById('cs-swipe-wrap').style.display='block';
-    document.getElementById('cs-summary').style.display='none';
-    csCurrentAgent=agents[currentAgent]?agents[currentAgent].name:'Kevin';
-    showCurrentContact();
+    showBatchChooser();
   };
   reader.readAsText(file);
 }
 
+function getCsStorageKey(){
+  csCurrentAgent=agents[currentAgent]?agents[currentAgent].name:'Kevin';
+  return'cs-progress-'+csCurrentAgent;
+}
+
+function loadCsProgress(){
+  const saved=localStorage.getItem(getCsStorageKey());
+  if(saved){
+    try{return JSON.parse(saved);}catch(e){return null;}
+  }
+  return null;
+}
+
+function showBatchChooser(){
+  const saved=loadCsProgress();
+  const total=saved?saved.contacts.length:csContacts.length;
+  const position=saved?saved.position:0;
+  const remaining=total-position;
+
+  document.getElementById('cs-batch-chooser').style.display='block';
+  document.getElementById('cs-swipe-wrap').style.display='none';
+  document.getElementById('cs-summary').style.display='none';
+
+  document.getElementById('cs-batch-remaining').textContent=
+    position>0
+      ? `${remaining} contacts left to sort (${position} done already)`
+      : `${remaining} contacts to sort`;
+}
+
+function startBatch(size){
+  const saved=loadCsProgress();
+  if(saved){
+    csContacts=saved.contacts;
+    csBatchStart=saved.position;
+  } else {
+    csBatchStart=0;
+  }
+  csIndex=csBatchStart;
+  csBatchSize=size===0?csContacts.length-csBatchStart:size; // 0 = sort all remaining
+  csBatchEnd=Math.min(csBatchStart+csBatchSize,csContacts.length);
+  csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
+  csHistory=[];
+  document.getElementById('cs-batch-chooser').style.display='none';
+  document.getElementById('cs-swipe-wrap').style.display='block';
+  document.getElementById('cs-summary').style.display='none';
+  showCurrentContact();
+}
+
 function showCurrentContact(){
-  if(csIndex>=csContacts.length){
+  if(csIndex>=csBatchEnd){
     finishContactSort();
     return;
   }
   const c=csContacts[csIndex];
   document.getElementById('cs-name').textContent=c.name;
   document.getElementById('cs-phone').textContent=c.phone||c.email||'No phone or email';
-  document.getElementById('cs-progress').textContent=`${csIndex} / ${csContacts.length}`;
+  const doneInBatch=csIndex-csBatchStart;
+  const totalInBatch=csBatchEnd-csBatchStart;
+  document.getElementById('cs-progress').textContent=`${doneInBatch} / ${totalInBatch} this session`;
   const backBtn=document.getElementById('cs-back-btn');
   if(backBtn){
     backBtn.style.opacity=csHistory.length>0?'1':'.4';
@@ -1961,6 +2046,10 @@ function showCurrentContact(){
   document.querySelectorAll('.lc-btn').forEach(b=>b.classList.remove('lc-selected'));
   const todayBtn=document.querySelector('.lc-btn[data-days="0"]');
   if(todayBtn)todayBtn.classList.add('lc-selected');
+}
+
+function saveCsPosition(){
+  localStorage.setItem(getCsStorageKey(),JSON.stringify({contacts:csContacts,position:csIndex}));
 }
 
 async function tagContact(temp){
@@ -1984,6 +2073,7 @@ async function tagContact(temp){
     }
   }catch(e){}
   csIndex++;
+  saveCsPosition();
   showCurrentContact();
 }
 
@@ -1995,11 +2085,13 @@ async function goBackContact(){
     await sb.from('agent_contacts').delete().eq('id',last.rowId);
   }catch(e){}
   csIndex=last.index;
+  saveCsPosition();
   showCurrentContact();
 }
 
 function skipContact(){
   csIndex++;
+  saveCsPosition();
   showCurrentContact();
 }
 
@@ -2010,6 +2102,13 @@ function finishContactSort(){
   document.getElementById('cs-count-warm').textContent=csCounts.warm;
   document.getElementById('cs-count-hot').textContent=csCounts.hot;
   document.getElementById('cs-count-closed').textContent=csCounts.closed;
+  const remaining=csContacts.length-csIndex;
+  const summaryNote=document.getElementById('cs-summary-remaining');
+  if(summaryNote){
+    summaryNote.textContent=remaining>0
+      ?`${remaining} contact${remaining===1?'':'s'} still left. Come back anytime — your spot is saved.`
+      :`That's everyone! Your whole list is sorted.`;
+  }
 }
 
 function resetContactSort(){
@@ -2017,8 +2116,10 @@ function resetContactSort(){
   csIndex=0;
   csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
   csHistory=[];
+  localStorage.removeItem(getCsStorageKey());
   document.getElementById('cs-howto').style.display='block';
   document.getElementById('cs-upload-card').style.display='block';
+  document.getElementById('cs-batch-chooser').style.display='none';
   document.getElementById('cs-swipe-wrap').style.display='none';
   document.getElementById('cs-summary').style.display='none';
   document.getElementById('cs-upload-status').textContent='';
