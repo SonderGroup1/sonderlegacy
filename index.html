@@ -874,6 +874,9 @@ body.light .quote-bar{color:#fff}
             <button onclick="tagContact('closed')" style="width:100%;background:var(--teal-bg);border:1px solid var(--teal-dim);border-radius:12px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">
               <span style="font-size:16px">✅</span> <span style="font-size:13px;font-weight:500;color:var(--teal)">Closed — stay in touch</span>
             </button>
+            <button onclick="tagContact('partner')" style="width:100%;background:var(--purple-bg);border:1px solid var(--purple-dim);border-radius:12px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">
+              <span style="font-size:16px">🤝</span> <span style="font-size:13px;font-weight:500;color:var(--purple)">Referral partner</span>
+            </button>
             <button onclick="tagContact('trash')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px">
               <span style="font-size:15px">💩</span> <span style="font-size:12px;font-weight:500;color:var(--muted)">Never reaching out to this person</span>
             </button>
@@ -887,11 +890,14 @@ body.light .quote-bar{color:#fff}
             <div style="font-size:40px;margin-bottom:12px">✅</div>
             <div style="font-size:20px;font-family:'DM Serif Display',serif;color:var(--text);margin-bottom:6px">Nice work!</div>
             <div style="font-size:13px;color:var(--muted);margin-bottom:20px" id="cs-summary-remaining">Your contacts are tagged and saved.</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:20px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
               <div style="background:var(--blue-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--blue)" id="cs-count-cold">0</div><div style="font-size:10px;color:var(--muted)">Cold</div></div>
               <div style="background:var(--amber-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--amber)" id="cs-count-warm">0</div><div style="font-size:10px;color:var(--muted)">Warm</div></div>
               <div style="background:var(--red-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--red)" id="cs-count-hot">0</div><div style="font-size:10px;color:var(--muted)">Hot</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
               <div style="background:var(--teal-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--teal)" id="cs-count-closed">0</div><div style="font-size:10px;color:var(--muted)">Closed</div></div>
+              <div style="background:var(--purple-bg);border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:500;color:var(--purple)" id="cs-count-partner">0</div><div style="font-size:10px;color:var(--muted)">Partners</div></div>
             </div>
             <button class="submit-btn" style="width:100%;margin-bottom:8px" onclick="showBatchChooser()">Sort another batch</button>
             <button class="nav-item" style="width:100%;margin-bottom:8px" onclick="switchCsTab('mylist',document.querySelectorAll('#cs-tabs .agent-pill')[1])">View my contact list →</button>
@@ -904,7 +910,7 @@ body.light .quote-bar{color:#fff}
       <div id="cs-tab-mylist" style="display:none">
         <div class="card" style="margin-bottom:16px;background:var(--navy);border:1px solid rgba(201,168,76,.3)">
           <div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.7">
-            🔥 Hot = touch every 2-3 days · 🌤️ Warm = weekly · 🧊 Cold = monthly · ✅ Closed = quarterly · 💩 Not interested = removed from your list.<br>
+            🔥 Hot = touch every 2-3 days · 🌤️ Warm = weekly · 🧊 Cold = monthly · ✅ Closed = quarterly · 🤝 Referral partner = quarterly · 💩 Not interested = removed from your list.<br>
             When a contact is overdue, their card turns red and says <strong style="color:#fff">TOUCH ME</strong>.
           </div>
         </div>
@@ -1894,7 +1900,7 @@ Be specific with numbers. Don't sugarcoat. Don't be mean. No emojis anywhere.`;
 
 let csContacts=[];
 let csIndex=0;
-let csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
+let csCounts={cold:0,warm:0,hot:0,closed:0,partner:0,trash:0};
 let csCurrentAgent=null;
 let csLastContactedDays=0;
 let csHistory=[];
@@ -1910,12 +1916,13 @@ function setLastContacted(days,btn){
   btn.classList.add('lc-selected');
 }
 
-const TOUCH_CADENCE={hot:3,warm:7,cold:30,closed:90}; // days
+const TOUCH_CADENCE={hot:3,warm:7,cold:30,closed:90,partner:90}; // days
 const TEMP_META={
   hot:{icon:'🔥',color:'var(--red)',bg:'var(--red-bg)',dim:'var(--red-dim)',label:'Hot'},
   warm:{icon:'🌤️',color:'var(--amber)',bg:'var(--amber-bg)',dim:'var(--amber-dim)',label:'Warm'},
   cold:{icon:'🧊',color:'var(--blue)',bg:'var(--blue-bg)',dim:'var(--blue-dim)',label:'Cold'},
   closed:{icon:'✅',color:'var(--teal)',bg:'var(--teal-bg)',dim:'var(--teal-dim)',label:'Closed'},
+  partner:{icon:'🤝',color:'var(--purple)',bg:'var(--purple-bg)',dim:'var(--purple-dim)',label:'Referral partner'},
   trash:{icon:'💩',color:'var(--muted)',bg:'var(--surface2)',dim:'var(--border)',label:'Not interested'},
 };
 
@@ -2000,7 +2007,7 @@ function startBatch(size){
   csIndex=0;
   csBatchSize=size===0?csContacts.length:size; // 0 = sort all remaining
   csBatchEnd=Math.min(csBatchSize,csContacts.length);
-  csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
+  csCounts={cold:0,warm:0,hot:0,closed:0,partner:0,trash:0};
   csHistory=[];
   document.getElementById('cs-batch-chooser').style.display='none';
   document.getElementById('cs-swipe-wrap').style.display='block';
@@ -2078,6 +2085,7 @@ function finishContactSort(){
   document.getElementById('cs-count-warm').textContent=csCounts.warm;
   document.getElementById('cs-count-hot').textContent=csCounts.hot;
   document.getElementById('cs-count-closed').textContent=csCounts.closed;
+  document.getElementById('cs-count-partner').textContent=csCounts.partner;
   // Trim off everyone just processed so "Sort another batch" continues cleanly
   csAlreadyDoneCount+=csIndex;
   csContacts=csContacts.slice(csIndex);
@@ -2093,7 +2101,7 @@ function finishContactSort(){
 function resetContactSort(){
   csContacts=[];
   csIndex=0;
-  csCounts={cold:0,warm:0,hot:0,closed:0,trash:0};
+  csCounts={cold:0,warm:0,hot:0,closed:0,partner:0,trash:0};
   csHistory=[];
   document.getElementById('cs-howto').style.display='block';
   document.getElementById('cs-upload-card').style.display='block';
@@ -2132,7 +2140,7 @@ async function renderContactList(){
   }
 
   // Sort: overdue first, then by temperature priority (hot, warm, cold, closed)
-  const tempPriority={hot:0,warm:1,cold:2,closed:3};
+  const tempPriority={hot:0,warm:1,cold:2,closed:3,partner:4};
   contacts.sort((a,b)=>{
     const aOver=isOverdue(a),bOver=isOverdue(b);
     if(aOver!==bOver)return aOver?-1:1;
@@ -2170,6 +2178,7 @@ async function renderContactList(){
               <option value="warm" ${c.temperature==='warm'?'selected':''}>🌤️ Warm</option>
               <option value="cold" ${c.temperature==='cold'?'selected':''}>🧊 Cold</option>
               <option value="closed" ${c.temperature==='closed'?'selected':''}>✅ Closed</option>
+              <option value="partner" ${c.temperature==='partner'?'selected':''}>🤝 Referral partner</option>
               <option value="trash" ${c.temperature==='trash'?'selected':''}>💩 Not interested</option>
             </select>
             <button onclick="${overdue?`openTouchModal(${c.id},'${c.contact_name.replace(/'/g,"\\'")}','${c.temperature}',${days})`:`logTouch(${c.id})`}" style="font-size:11px;font-weight:600;padding:7px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;background:${overdue?'var(--red)':'var(--surface2)'};color:${overdue?'#fff':'var(--muted)'};white-space:nowrap">${overdue?'TOUCH ME':'Log touch'}</button>
@@ -2198,6 +2207,7 @@ const TOUCH_PROMPTS={
   warm:(name,days)=>`Write a short, warm check-in text to a real estate contact named ${name} who has shown some interest but no urgency. It's been ${days} days since last contact. Keep it low-pressure — a genuine check-in, not a sales push. 1-3 sentences. Sound human.`,
   cold:(name,days)=>`Write a short, low-key text to a cold real estate contact named ${name} — someone in the database with no recent engagement. It's been ${days} days since last contact. This should feel like a value touch, not a sales pitch — a market update mention, a "thinking of you," or a simple genuine check-in. 1-2 sentences. No pressure at all.`,
   closed:(name,days)=>`Write a short "stay in touch" text to a PAST CLIENT named ${name} who already closed with this agent. It's been ${days} days since last contact. This should feel like checking in on a real relationship — how's the house, how's life — not asking for anything. Could subtly open the door to referrals but only if it feels natural. 1-2 sentences. Warm and genuine.`,
+  partner:(name,days)=>`Write a short check-in text to a REFERRAL PARTNER named ${name} — a vendor, contractor, or business contact this real estate agent refers business to and gets referrals from (like a glass guy, inspector, lender, etc). It's been ${days} days since last contact. Keep it warm and professional, maybe mention sending business their way or appreciating the relationship. 1-2 sentences. Not salesy at all — this is a peer relationship.`,
 };
 
 async function openTouchModal(contactId,contactName,temperature,days){
