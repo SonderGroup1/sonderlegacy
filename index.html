@@ -832,17 +832,18 @@ body.light .quote-bar{color:#fff}
         <div id="cs-swipe-wrap" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
             <div style="font-size:13px;color:var(--muted)"><span id="cs-progress">0 / 0</span> tagged</div>
-            <div style="display:flex;gap:8px">
-              <button class="nav-item" style="width:auto;padding:6px 14px;font-size:12px" onclick="goBackContact()" id="cs-back-btn">← Back</button>
-              <button class="nav-item" style="width:auto;padding:6px 14px;font-size:12px" onclick="resetContactSort()">Start over</button>
-            </div>
+            <button class="nav-item" style="width:auto;padding:6px 14px;font-size:12px" onclick="resetContactSort()">Start over</button>
           </div>
 
           <div id="cs-card-wrap" style="text-align:center">
-            <div class="card" style="padding:32px 24px;margin-bottom:14px" id="cs-current-card">
+            <div class="card" style="padding:32px 24px;margin-bottom:10px" id="cs-current-card">
               <div style="font-size:24px;font-weight:500;color:var(--text);margin-bottom:6px" id="cs-name">—</div>
               <div style="font-size:13px;color:var(--muted)" id="cs-phone">—</div>
             </div>
+
+            <button onclick="goBackContact()" id="cs-back-btn" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px;font-size:14px;font-weight:500;color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px">
+              <span style="font-size:16px">←</span> Undo last tag / go back
+            </button>
 
             <div style="text-align:left;margin-bottom:16px">
               <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">When did you last talk to them?</div>
