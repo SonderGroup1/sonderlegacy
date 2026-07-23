@@ -846,9 +846,12 @@ body.light .quote-bar{color:#fff}
             </button>
 
             <div style="text-align:left;margin-bottom:16px">
-              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">When did you last talk to them?</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <div style="width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--navy);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+                <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">When did you last talk to them?</div>
+              </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                <button onclick="setLastContacted(0,this)" class="lc-btn lc-selected" data-days="0">Today</button>
+                <button onclick="setLastContacted(0,this)" class="lc-btn" data-days="0">Today</button>
                 <button onclick="setLastContacted(3,this)" class="lc-btn" data-days="3">A few days ago</button>
                 <button onclick="setLastContacted(14,this)" class="lc-btn" data-days="14">2 weeks ago</button>
                 <button onclick="setLastContacted(30,this)" class="lc-btn" data-days="30">A month ago</button>
@@ -857,27 +860,34 @@ body.light .quote-bar{color:#fff}
               </div>
             </div>
 
+            <div style="text-align:left;margin-bottom:8px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div id="cs-step2-num" style="width:20px;height:20px;border-radius:50%;background:var(--border2);color:var(--muted);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s">2</div>
+                <div id="cs-tag-hint" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Tag this contact</div>
+              </div>
+            </div>
+
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
-              <button onclick="tagContact('cold')" style="background:var(--blue-bg);border:1px solid var(--blue-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
+              <button onclick="tagContact('cold')" class="temp-tag-btn" style="background:var(--blue-bg);border:1px solid var(--blue-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
                 <div style="font-size:22px;margin-bottom:4px">🧊</div>
                 <div style="font-size:13px;font-weight:500;color:var(--blue)">Cold</div>
               </button>
-              <button onclick="tagContact('warm')" style="background:var(--amber-bg);border:1px solid var(--amber-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
+              <button onclick="tagContact('warm')" class="temp-tag-btn" style="background:var(--amber-bg);border:1px solid var(--amber-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
                 <div style="font-size:22px;margin-bottom:4px">🌤️</div>
                 <div style="font-size:13px;font-weight:500;color:var(--amber)">Warm</div>
               </button>
-              <button onclick="tagContact('hot')" style="background:var(--red-bg);border:1px solid var(--red-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
+              <button onclick="tagContact('hot')" class="temp-tag-btn" style="background:var(--red-bg);border:1px solid var(--red-dim);border-radius:12px;padding:16px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">
                 <div style="font-size:22px;margin-bottom:4px">🔥</div>
                 <div style="font-size:13px;font-weight:500;color:var(--red)">Hot</div>
               </button>
             </div>
-            <button onclick="tagContact('closed')" style="width:100%;background:var(--teal-bg);border:1px solid var(--teal-dim);border-radius:12px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">
+            <button onclick="tagContact('closed')" class="temp-tag-btn" style="width:100%;background:var(--teal-bg);border:1px solid var(--teal-dim);border-radius:12px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">
               <span style="font-size:16px">✅</span> <span style="font-size:13px;font-weight:500;color:var(--teal)">Closed — stay in touch</span>
             </button>
-            <button onclick="tagContact('partner')" style="width:100%;background:var(--purple-bg);border:1px solid var(--purple-dim);border-radius:12px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">
+            <button onclick="tagContact('partner')" class="temp-tag-btn" style="width:100%;background:var(--purple-bg);border:1px solid var(--purple-dim);border-radius:12px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">
               <span style="font-size:16px">🤝</span> <span style="font-size:13px;font-weight:500;color:var(--purple)">Referral partner</span>
             </button>
-            <button onclick="tagContact('trash')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px">
+            <button onclick="tagContact('trash')" class="temp-tag-btn" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px">
               <span style="font-size:15px">💩</span> <span style="font-size:12px;font-weight:500;color:var(--muted)">Never reaching out to this person</span>
             </button>
 
@@ -1903,6 +1913,7 @@ let csIndex=0;
 let csCounts={cold:0,warm:0,hot:0,closed:0,partner:0,trash:0};
 let csCurrentAgent=null;
 let csLastContactedDays=0;
+let csTimeframeSelected=false;
 let csHistory=[];
 let csBatchStart=0;
 let csBatchSize=25;
@@ -1912,8 +1923,26 @@ let csAlreadyDoneCount=0;
 
 function setLastContacted(days,btn){
   csLastContactedDays=days;
+  csTimeframeSelected=true;
   document.querySelectorAll('.lc-btn').forEach(b=>b.classList.remove('lc-selected'));
   btn.classList.add('lc-selected');
+  updateTagButtonsState();
+}
+
+function updateTagButtonsState(){
+  const enabled=csTimeframeSelected;
+  document.querySelectorAll('.temp-tag-btn').forEach(b=>{
+    b.disabled=!enabled;
+    b.style.opacity=enabled?'1':'.4';
+    b.style.pointerEvents=enabled?'auto':'none';
+  });
+  const stepNum=document.getElementById('cs-step2-num');
+  const hint=document.getElementById('cs-tag-hint');
+  if(stepNum){
+    stepNum.style.background=enabled?'var(--gold)':'var(--border2)';
+    stepNum.style.color=enabled?'var(--navy)':'var(--muted)';
+  }
+  if(hint)hint.textContent=enabled?'Tag this contact':'Pick a timeframe above first ↑';
 }
 
 const TOUCH_CADENCE={hot:3,warm:7,cold:30,closed:90,partner:90}; // days
@@ -2031,11 +2060,11 @@ function showCurrentContact(){
     backBtn.style.opacity=csHistory.length>0?'1':'.4';
     backBtn.style.pointerEvents=csHistory.length>0?'auto':'none';
   }
-  // Reset last-contacted selector to "Today" for each new contact
+  // Reset the "when did you last talk to them" selector — nothing pre-selected
   csLastContactedDays=0;
+  csTimeframeSelected=false;
   document.querySelectorAll('.lc-btn').forEach(b=>b.classList.remove('lc-selected'));
-  const todayBtn=document.querySelector('.lc-btn[data-days="0"]');
-  if(todayBtn)todayBtn.classList.add('lc-selected');
+  updateTagButtonsState();
 }
 
 async function tagContact(temp){
