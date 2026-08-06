@@ -2452,16 +2452,9 @@ async function confirmTouchLogged(method){
 }
 
 async function changeContactTemp(contactId,newTemp){
-  // If this contact was never tagged before, initialize their touch tracking too
-  const res=await sb.from('agent_contacts').select('last_touched,touch_count').eq('id',contactId);
-  const row=res.data&&res.data.length>0?res.data[0]:null;
-  const updates={temperature:newTemp,status:'tagged'};
-  if(row&&!row.last_touched){
-    updates.last_touched=new Date().toISOString();
-    updates.touch_count=1;
-    updates.tagged_at=new Date().toISOString();
-  }
-  await sb.from('agent_contacts').update(updates).eq('id',contactId);
+  // Tagging a contact does NOT count as touching them — those are separate actions.
+  // touch_count stays at 0 and last_touched stays null until they actually log a touch.
+  await sb.from('agent_contacts').update({temperature:newTemp,status:'tagged'}).eq('id',contactId);
   renderContactList();
 }
 
