@@ -2360,8 +2360,8 @@ async function openTouchModal(contactId,contactName,temperature,days){
   document.getElementById('touch-modal-call').style.display='none';
   document.getElementById('touch-modal-text-flow').style.display='none';
   // Fetch phone number for the sms: link
-  const{data}=await sb.from('agent_contacts').select('phone').eq('id',contactId).single();
-  touchModalContactPhone=data?data.phone:'';
+  const res=await sb.from('agent_contacts').select('phone').eq('id',contactId);
+  touchModalContactPhone=res.data&&res.data.length>0?res.data[0].phone:'';
 }
 
 function closeTouchModal(){
@@ -2427,9 +2427,14 @@ function copyTouchText(){
 }
 
 async function logTouch(contactId){
-  const{data}=await sb.from('agent_contacts').select('touch_count').eq('id',contactId).single();
-  const newCount=data?(data.touch_count||0)+1:1;
-  await sb.from('agent_contacts').update({last_touched:new Date().toISOString(),touch_count:newCount}).eq('id',contactId);
+  try{
+    const res=await sb.from('agent_contacts').select('touch_count').eq('id',contactId);
+    const row=res.data&&res.data.length>0?res.data[0]:null;
+    const newCount=row?(row.touch_count||0)+1:1;
+    await sb.from('agent_contacts').update({last_touched:new Date().toISOString(),touch_count:newCount}).eq('id',contactId);
+  }catch(e){
+    console.error('logTouch error:',e);
+  }
   renderContactList();
 }
 
@@ -2446,9 +2451,10 @@ async function confirmTouchLogged(method){
 
 async function changeContactTemp(contactId,newTemp){
   // If this contact was never tagged before, initialize their touch tracking too
-  const{data}=await sb.from('agent_contacts').select('last_touched,touch_count').eq('id',contactId).single();
-  const updates={temperature:newTemp,status:newTemp==='trash'?'tagged':'tagged'};
-  if(data&&!data.last_touched){
+  const res=await sb.from('agent_contacts').select('last_touched,touch_count').eq('id',contactId);
+  const row=res.data&&res.data.length>0?res.data[0]:null;
+  const updates={temperature:newTemp,status:'tagged'};
+  if(row&&!row.last_touched){
     updates.last_touched=new Date().toISOString();
     updates.touch_count=1;
     updates.tagged_at=new Date().toISOString();
