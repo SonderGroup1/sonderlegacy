@@ -2302,15 +2302,15 @@ async function renderContactList(){
     const isTagged=!!c.temperature;
     const meta=isTagged?(TEMP_META[c.temperature]||TEMP_META.cold):{color:'var(--muted)',bg:'var(--surface2)',dim:'var(--border)'};
     const overdue=isTagged&&isOverdue(c);
-    const justTouched=c.id===csJustTouchedId;
     const days=daysSince(c.last_touched);
+    const touchedToday=isTagged&&days===0;
     const daysText=!isTagged?'not tagged yet':days>=999?'never touched':days===0?'touched today':`touched ${days}d ago`;
     return`
-      <div class="card" style="margin-bottom:10px;padding:14px 16px;transition:background .3s,border-color .3s;${justTouched?'border:1px solid var(--teal);background:var(--teal-bg)':overdue?'border:1px solid var(--red);background:var(--red-bg)':''}">
+      <div class="card" style="margin-bottom:10px;padding:14px 16px;${touchedToday?'border:1px solid var(--teal);background:var(--teal-bg)':overdue?'border:1px solid var(--red);background:var(--red-bg)':''}">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.contact_name}</div>
-            <div style="font-size:11px;color:${justTouched?'var(--teal)':'var(--muted)'};margin-top:2px;font-weight:${justTouched?'600':'400'}">${justTouched?'✓ Logged just now':daysText}</div>
+            <div style="font-size:11px;color:${touchedToday?'var(--teal)':'var(--muted)'};margin-top:2px;font-weight:${touchedToday?'600':'400'}">${touchedToday?'✓ Touched today':daysText}</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
             <select onchange="changeContactTemp(${c.id},this.value)" style="font-size:11px;padding:5px 8px;border-radius:6px;border:1px solid ${meta.dim};background:${meta.bg};color:${meta.color};font-family:'DM Sans',sans-serif">
@@ -2437,9 +2437,7 @@ async function logTouch(contactId){
   }catch(e){
     console.error('logTouch error:',e);
   }
-  csJustTouchedId=contactId;
   await renderContactList();
-  setTimeout(()=>{csJustTouchedId=null;},2000);
 }
 
 async function confirmTouchLogged(method){
