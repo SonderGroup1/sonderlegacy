@@ -924,6 +924,7 @@ body.light .quote-bar{color:#fff}
             When a contact is overdue, their card turns red and says <strong style="color:#fff">TOUCH ME</strong>.
           </div>
         </div>
+        <button class="submit-btn" style="width:100%;margin-bottom:16px" onclick="goEditMoreContacts()">📇 Edit more contacts</button>
         <div id="cs-list-content"></div>
       </div>
     </div>
@@ -1955,17 +1956,36 @@ const TEMP_META={
   trash:{icon:'💩',color:'var(--muted)',bg:'var(--surface2)',dim:'var(--border)',label:'Not interested'},
 };
 
-function switchCsTab(tab,btn){
+async function switchCsTab(tab,btn){
   document.querySelectorAll('#cs-tabs .agent-pill').forEach(p=>p.classList.remove('active'));
   if(btn)btn.classList.add('active');
   document.getElementById('cs-tab-import').style.display=tab==='import'?'block':'none';
   document.getElementById('cs-tab-mylist').style.display=tab==='mylist'?'block':'none';
   if(tab==='mylist')renderContactList();
-  if(tab==='import'&&csContacts.length===0){
-    document.getElementById('cs-howto').style.display='block';
-    document.getElementById('cs-upload-card').style.display='block';
-    document.getElementById('cs-batch-chooser').style.display='none';
+  if(tab==='import'){
+    await loadUntaggedFromSupabase();
+    if(csContacts.length>0){
+      document.getElementById('cs-howto').style.display='none';
+      document.getElementById('cs-upload-card').style.display='none';
+      showBatchChooser();
+    } else {
+      document.getElementById('cs-howto').style.display='block';
+      document.getElementById('cs-upload-card').style.display='block';
+      document.getElementById('cs-batch-chooser').style.display='none';
+    }
   }
+}
+
+async function goEditMoreContacts(){
+  const importTabBtn=document.querySelectorAll('#cs-tabs .agent-pill')[0];
+  document.querySelectorAll('#cs-tabs .agent-pill').forEach(p=>p.classList.remove('active'));
+  if(importTabBtn)importTabBtn.classList.add('active');
+  document.getElementById('cs-tab-import').style.display='block';
+  document.getElementById('cs-tab-mylist').style.display='none';
+  document.getElementById('cs-howto').style.display='none';
+  document.getElementById('cs-upload-card').style.display='none';
+  await loadUntaggedFromSupabase();
+  showBatchChooser();
 }
 
 function parseVcf(text){
@@ -1999,21 +2019,42 @@ function handleVcfUpload(event){
       return;
     }
     csCurrentAgent=agents[currentAgent]?agents[currentAgent].name:'Kevin';
-    statusEl.textContent='Checking what you\'ve already sorted...';
-    // Pull every contact this agent has already tagged, so we can skip them
+    statusEl.textContent='Saving your contacts...';
+
+    // Find contacts already in the database for this agent (by name+phone) so we don't duplicate on re-upload
     const{data:already}=await sb.from('agent_contacts').select('contact_name,phone').eq('agent_name',csCurrentAgent);
     const alreadySet=new Set((already||[]).map(a=>(a.contact_name||'').trim().toLowerCase()+'|'+(a.phone||'').trim()));
-    const remaining=parsed.filter(c=>!alreadySet.has((c.name||'').trim().toLowerCase()+'|'+(c.phone||'').trim()));
-    csContacts=remaining;
-    csHistory=[];
-    csFullUploadCount=parsed.length;
-    csAlreadyDoneCount=parsed.length-remaining.length;
-    statusEl.textContent=`Loaded ${parsed.length} contacts`;
+    const brandNew=parsed.filter(c=>!alreadySet.has((c.name||'').trim().toLowerCase()+'|'+(c.phone||'').trim()));
+
+    // Save every brand-new contact to Supabase immediately, untagged — this is the ONE-TIME upload
+    if(brandNew.length>0){
+      const rows=brandNew.map(c=>({
+        agent_name:csCurrentAgent,
+        contact_name:c.name,
+        phone:c.phone,
+        email:c.email,
+        temperature:null,
+        status:'untagged'
+      }));
+      // Insert in chunks of 200 to stay safe with request size
+      for(let i=0;i<rows.length;i+=200){
+        await sb.from('agent_contacts').insert(rows.slice(i,i+200));
+      }
+    }
+
+    statusEl.textContent=`Saved ${brandNew.length} new contact${brandNew.length===1?'':'s'} (${parsed.length-brandNew.length} were already in your list)`;
     document.getElementById('cs-howto').style.display='none';
     document.getElementById('cs-upload-card').style.display='none';
+    await loadUntaggedFromSupabase();
     showBatchChooser();
   };
   reader.readAsText(file);
+}
+
+async function loadUntaggedFromSupabase(){
+  csCurrentAgent=agents[currentAgent]?agents[currentAgent].name:'Kevin';
+  const{data}=await sb.from('agent_contacts').select('*').eq('agent_name',csCurrentAgent).is('temperature',null);
+  csContacts=(data||[]).map(r=>({id:r.id,name:r.contact_name,phone:r.phone,email:r.email}));
 }
 
 function showBatchChooser(){
@@ -2023,11 +2064,9 @@ function showBatchChooser(){
   document.getElementById('cs-summary').style.display='none';
 
   if(remaining===0){
-    document.getElementById('cs-batch-remaining').textContent='You\'ve sorted everyone in this file!';
-  } else if(csAlreadyDoneCount>0){
-    document.getElementById('cs-batch-remaining').textContent=`${remaining} contacts left to sort (${csAlreadyDoneCount} done already)`;
+    document.getElementById('cs-batch-remaining').textContent='You\'ve sorted everyone — nice work!';
   } else {
-    document.getElementById('cs-batch-remaining').textContent=`${remaining} contacts to sort`;
+    document.getElementById('cs-batch-remaining').textContent=`${remaining} contact${remaining===1?'':'s'} left to sort`;
   }
 }
 
@@ -2073,19 +2112,15 @@ async function tagContact(temp){
   const lastTouchedDate=new Date();
   lastTouchedDate.setDate(lastTouchedDate.getDate()-csLastContactedDays);
   try{
-    const{data}=await sb.from('agent_contacts').insert([{
-      agent_name:csCurrentAgent,
-      contact_name:c.name,
-      phone:c.phone,
-      email:c.email,
+    // Update the existing row (already saved on upload) instead of inserting a new one
+    await sb.from('agent_contacts').update({
       temperature:temp,
+      status:'tagged',
       tagged_at:new Date().toISOString(),
       last_touched:lastTouchedDate.toISOString(),
       touch_count:1
-    }]).select();
-    if(data&&data[0]){
-      csHistory.push({index:csIndex,temp:temp,rowId:data[0].id});
-    }
+    }).eq('id',c.id);
+    csHistory.push({index:csIndex,temp:temp,rowId:c.id});
   }catch(e){}
   csIndex++;
   showCurrentContact();
@@ -2096,7 +2131,8 @@ async function goBackContact(){
   const last=csHistory.pop();
   csCounts[last.temp]=Math.max(0,csCounts[last.temp]-1);
   try{
-    await sb.from('agent_contacts').delete().eq('id',last.rowId);
+    // Revert the row back to untagged instead of deleting it
+    await sb.from('agent_contacts').update({temperature:null,status:'untagged'}).eq('id',last.rowId);
   }catch(e){}
   csIndex=last.index;
   showCurrentContact();
@@ -2116,7 +2152,6 @@ function finishContactSort(){
   document.getElementById('cs-count-closed').textContent=csCounts.closed;
   document.getElementById('cs-count-partner').textContent=csCounts.partner;
   // Trim off everyone just processed so "Sort another batch" continues cleanly
-  csAlreadyDoneCount+=csIndex;
   csContacts=csContacts.slice(csIndex);
   const remaining=csContacts.length;
   const summaryNote=document.getElementById('cs-summary-remaining');
@@ -2160,11 +2195,17 @@ async function renderContactList(){
   const agentName=agents[currentAgent]?agents[currentAgent].name:'Kevin';
   const{data}=await sb.from('agent_contacts').select('*').eq('agent_name',agentName).order('last_touched',{ascending:true});
   const allContacts=data||[];
-  const contacts=allContacts.filter(c=>c.temperature!=='trash');
-  const trashCount=allContacts.length-contacts.length;
+  const untaggedCount=allContacts.filter(c=>!c.temperature).length;
+  const contacts=allContacts.filter(c=>c.temperature&&c.temperature!=='trash');
+  const trashCount=allContacts.filter(c=>c.temperature==='trash').length;
 
-  if(contacts.length===0&&trashCount===0){
+  if(contacts.length===0&&trashCount===0&&untaggedCount===0){
     el.innerHTML=`<div class="card" style="text-align:center;padding:32px"><div style="font-size:32px;margin-bottom:10px">📇</div><div style="font-size:14px;color:var(--muted)">No contacts yet. Import your contacts to get started.</div></div>`;
+    return;
+  }
+
+  if(contacts.length===0&&untaggedCount>0){
+    el.innerHTML=`<div class="card" style="text-align:center;padding:32px"><div style="font-size:32px;margin-bottom:10px">📇</div><div style="font-size:14px;color:var(--muted)">You've got ${untaggedCount} contact${untaggedCount===1?'':'s'} saved and waiting to be sorted. Tap "Edit more contacts" above to get started.</div></div>`;
     return;
   }
 
