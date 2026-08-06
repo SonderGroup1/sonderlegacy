@@ -932,6 +932,9 @@ function hideLoginHelp(){document.getElementById('login-help-overlay').style.dis
             <button onclick="tagContact('partner')" class="temp-tag-btn" style="width:100%;background:var(--purple-bg);border:1px solid var(--purple-dim);border-radius:12px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">
               <span style="font-size:16px">🤝</span> <span style="font-size:13px;font-weight:500;color:var(--purple)">Referral partner</span>
             </button>
+            <button onclick="tagContact('family')" class="temp-tag-btn" style="width:100%;background:var(--coral-bg);border:1px solid var(--coral-dim);border-radius:12px;padding:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">
+              <span style="font-size:16px">❤️</span> <span style="font-size:13px;font-weight:500;color:var(--coral)">Family — no touch schedule needed</span>
+            </button>
             <button onclick="tagContact('trash')" class="temp-tag-btn" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px">
               <span style="font-size:15px">💩</span> <span style="font-size:12px;font-weight:500;color:var(--muted)">Never reaching out to this person</span>
             </button>
@@ -965,7 +968,7 @@ function hideLoginHelp(){document.getElementById('login-help-overlay').style.dis
       <div id="cs-tab-mylist" style="display:none">
         <div class="card" style="margin-bottom:16px;background:var(--navy);border:1px solid rgba(201,168,76,.3)">
           <div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.7">
-            🔥 Hot = touch every 2-3 days · 🌤️ Warm = weekly · 🧊 Cold = monthly · ✅ Closed = quarterly · 🤝 Referral partner = quarterly · 💩 Not interested = removed from your list.<br>
+            🔥 Hot = touch every 2-3 days · 🌤️ Warm = weekly · 🧊 Cold = monthly · ✅ Closed = quarterly · 🤝 Referral partner = quarterly · ❤️ Family = no schedule, they're family · 💩 Not interested = removed from your list.<br>
             When a contact is overdue, their card turns red and says <strong style="color:#fff">TOUCH ME</strong>.
           </div>
         </div>
@@ -1997,13 +2000,14 @@ function updateTagButtonsState(){
   if(hint)hint.textContent=enabled?'Tag this contact':'Pick a timeframe above first ↑';
 }
 
-const TOUCH_CADENCE={hot:3,warm:7,cold:30,closed:90,partner:90}; // days
+const TOUCH_CADENCE={hot:3,warm:7,cold:30,closed:90,partner:90}; // days — family intentionally has no cadence
 const TEMP_META={
   hot:{icon:'🔥',color:'var(--red)',bg:'var(--red-bg)',dim:'var(--red-dim)',label:'Hot'},
   warm:{icon:'🌤️',color:'var(--amber)',bg:'var(--amber-bg)',dim:'var(--amber-dim)',label:'Warm'},
   cold:{icon:'🧊',color:'var(--blue)',bg:'var(--blue-bg)',dim:'var(--blue-dim)',label:'Cold'},
   closed:{icon:'✅',color:'var(--teal)',bg:'var(--teal-bg)',dim:'var(--teal-dim)',label:'Closed'},
   partner:{icon:'🤝',color:'var(--purple)',bg:'var(--purple-bg)',dim:'var(--purple-dim)',label:'Referral partner'},
+  family:{icon:'❤️',color:'var(--coral)',bg:'var(--coral-bg)',dim:'var(--coral-dim)',label:'Family'},
   trash:{icon:'💩',color:'var(--muted)',bg:'var(--surface2)',dim:'var(--border)',label:'Not interested'},
 };
 
@@ -2244,14 +2248,17 @@ function daysSince(dateStr){
 }
 
 function isOverdue(contact){
-  const cadence=TOUCH_CADENCE[contact.temperature]||30;
+  const cadence=TOUCH_CADENCE[contact.temperature];
+  if(cadence===undefined)return false; // no cadence defined = never overdue (e.g. family)
   return daysSince(contact.last_touched)>=cadence;
 }
 
 async function renderContactList(){
   const el=document.getElementById('cs-list-content');
   if(!el)return;
-  el.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Loading...</div>';
+  const scrollY=window.scrollY;
+  const mainEl=document.querySelector('.main');
+  const mainScrollY=mainEl?mainEl.scrollTop:0;
 
   const agentName=agents[currentAgent]?agents[currentAgent].name:'Kevin';
   const{data}=await sb.from('agent_contacts').select('*').eq('agent_name',agentName).order('last_touched',{ascending:true});
@@ -2268,7 +2275,7 @@ async function renderContactList(){
   let contacts;
   if(csListViewMode==='urgent'){
     contacts=allContacts.filter(c=>c.temperature&&c.temperature!=='trash');
-    const tempPriority={hot:0,warm:1,cold:2,closed:3,partner:4};
+    const tempPriority={hot:0,warm:1,cold:2,closed:3,partner:4,family:5};
     contacts.sort((a,b)=>{
       const aOver=isOverdue(a),bOver=isOverdue(b);
       if(aOver!==bOver)return aOver?-1:1;
@@ -2304,7 +2311,7 @@ async function renderContactList(){
     const overdue=isTagged&&isOverdue(c);
     const days=daysSince(c.last_touched);
     const touchedToday=isTagged&&days===0;
-    const daysText=!isTagged?'not tagged yet':days>=999?'never touched':days===0?'touched today':`touched ${days}d ago`;
+    const daysText=!isTagged?'not tagged yet':c.temperature==='family'?'family':days>=999?'never touched':days===0?'touched today':`touched ${days}d ago`;
     return`
       <div class="card" style="margin-bottom:10px;padding:14px 16px;${touchedToday?'border:1px solid var(--teal);background:var(--teal-bg)':overdue?'border:1px solid var(--red);background:var(--red-bg)':''}">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -2320,9 +2327,10 @@ async function renderContactList(){
               <option value="cold" ${c.temperature==='cold'?'selected':''}>🧊 Cold</option>
               <option value="closed" ${c.temperature==='closed'?'selected':''}>✅ Closed</option>
               <option value="partner" ${c.temperature==='partner'?'selected':''}>🤝 Referral partner</option>
+              <option value="family" ${c.temperature==='family'?'selected':''}>❤️ Family</option>
               <option value="trash" ${c.temperature==='trash'?'selected':''}>💩 Not interested</option>
             </select>
-            ${isTagged?`<button onclick="${overdue?`openTouchModal(${c.id},'${c.contact_name.replace(/'/g,"\\'")}','${c.temperature}',${days})`:`logTouch(${c.id})`}" style="font-size:11px;font-weight:600;padding:7px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;background:${overdue?'var(--red)':'var(--surface2)'};color:${overdue?'#fff':'var(--muted)'};white-space:nowrap">${overdue?'TOUCH ME':'Log touch'}</button>`:''}
+            ${isTagged&&c.temperature!=='family'?`<button onclick="${overdue?`openTouchModal(${c.id},'${c.contact_name.replace(/'/g,"\\'")}','${c.temperature}',${days})`:`logTouch(${c.id})`}" style="font-size:11px;font-weight:600;padding:7px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;background:${overdue?'var(--red)':'var(--surface2)'};color:${overdue?'#fff':'var(--muted)'};white-space:nowrap">${overdue?'TOUCH ME':'Log touch'}</button>`:''}
           </div>
         </div>
       </div>`;
@@ -2333,6 +2341,10 @@ async function renderContactList(){
   }
 
   el.innerHTML=html;
+
+  // Restore scroll position so logging a touch doesn't jump the page back to the top
+  window.scrollTo(0,scrollY);
+  if(mainEl)mainEl.scrollTop=mainScrollY;
 }
 
 // ── TOUCH ME AI MODAL ────────────────────────────────────────────
