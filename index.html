@@ -434,6 +434,7 @@ body.light .quote-bar{color:#fff}
         <span id="theme-label">🌙 Dark mode</span>
         <div class="toggle-track"><div class="toggle-thumb"></div></div>
       </button>
+      <button onclick="logoutSession()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px;font-size:12px;color:rgba(255,255,255,.5);cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px">🔒 Log out</button>
       <div style="font-size:11px;color:rgba(255,255,255,.3);padding:8px 8px 0">Today</div>
       <div style="font-size:13px;font-weight:500;color:rgba(255,255,255,.7);padding:2px 8px 0" id="sidebar-date"></div>
     </div>
@@ -2210,54 +2211,54 @@ async function renderContactList(){
   const agentName=agents[currentAgent]?agents[currentAgent].name:'Kevin';
   const{data}=await sb.from('agent_contacts').select('*').eq('agent_name',agentName).order('last_touched',{ascending:true});
   const allContacts=data||[];
-  const untaggedCount=allContacts.filter(c=>!c.temperature).length;
-  const contacts=allContacts.filter(c=>c.temperature&&c.temperature!=='trash');
   const trashCount=allContacts.filter(c=>c.temperature==='trash').length;
 
-  if(contacts.length===0&&trashCount===0&&untaggedCount===0){
+  if(allContacts.length===0){
     el.innerHTML=`<div class="card" style="text-align:center;padding:32px"><div style="font-size:32px;margin-bottom:10px">📇</div><div style="font-size:14px;color:var(--muted)">No contacts yet. Import your contacts to get started.</div></div>`;
     return;
   }
 
-  if(contacts.length===0&&untaggedCount>0){
-    el.innerHTML=`<div class="card" style="text-align:center;padding:32px"><div style="font-size:32px;margin-bottom:10px">📇</div><div style="font-size:14px;color:var(--muted)">You've got ${untaggedCount} contact${untaggedCount===1?'':'s'} saved and waiting to be sorted. Tap "Edit more contacts" above to get started.</div></div>`;
-    return;
-  }
-
-  // Sort based on view mode
-  const tempPriority={hot:0,warm:1,cold:2,closed:3,partner:4};
+  // "Needs attention" view = tagged, non-trash, sorted by urgency
+  // "View all" view = literally everyone including untagged, alphabetical
+  let contacts;
   if(csListViewMode==='urgent'){
+    contacts=allContacts.filter(c=>c.temperature&&c.temperature!=='trash');
+    const tempPriority={hot:0,warm:1,cold:2,closed:3,partner:4};
     contacts.sort((a,b)=>{
       const aOver=isOverdue(a),bOver=isOverdue(b);
       if(aOver!==bOver)return aOver?-1:1;
       return(tempPriority[a.temperature]||9)-(tempPriority[b.temperature]||9);
     });
   } else {
+    contacts=allContacts.filter(c=>c.temperature!=='trash');
     contacts.sort((a,b)=>(a.contact_name||'').localeCompare(b.contact_name||''));
   }
 
-  const overdueCount=contacts.filter(isOverdue).length;
+  if(contacts.length===0&&csListViewMode==='urgent'){
+    el.innerHTML=`<div class="card" style="text-align:center;padding:32px"><div style="font-size:32px;margin-bottom:10px">📇</div><div style="font-size:14px;color:var(--muted)">No tagged contacts yet. Switch to "View all" or tap "Edit more contacts" to start sorting.</div></div>`;
+    return;
+  }
+
+  const overdueCount=contacts.filter(c=>c.temperature&&isOverdue(c)).length;
 
   let html='';
-  if(overdueCount>0){
+  if(overdueCount>0&&csListViewMode==='urgent'){
     html+=`<div class="card" style="margin-bottom:16px;background:var(--red-bg);border:1px solid var(--red-dim)">
       <div style="font-size:14px;font-weight:600;color:var(--red)">⚠️ ${overdueCount} contact${overdueCount===1?' needs':'s need'} a touch right now</div>
     </div>`;
   }
 
   if(csListViewMode==='all'){
-    html+=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">${contacts.length} contact${contacts.length===1?'':'s'}, A-Z</div>`;
-  }
-
-  if(contacts.length===0){
-    html+=`<div class="card" style="text-align:center;padding:24px"><div style="font-size:13px;color:var(--muted)">All contacts are in the trash.</div></div>`;
+    const untaggedInView=contacts.filter(c=>!c.temperature).length;
+    html+=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">${contacts.length} contact${contacts.length===1?'':'s'}, A-Z${untaggedInView>0?` · ${untaggedInView} not yet tagged`:''}</div>`;
   }
 
   html+=contacts.map(c=>{
-    const meta=TEMP_META[c.temperature]||TEMP_META.cold;
-    const overdue=isOverdue(c);
+    const isTagged=!!c.temperature;
+    const meta=isTagged?(TEMP_META[c.temperature]||TEMP_META.cold):{color:'var(--muted)',bg:'var(--surface2)',dim:'var(--border)'};
+    const overdue=isTagged&&isOverdue(c);
     const days=daysSince(c.last_touched);
-    const daysText=days>=999?'never touched':days===0?'touched today':`touched ${days}d ago`;
+    const daysText=!isTagged?'not tagged yet':days>=999?'never touched':days===0?'touched today':`touched ${days}d ago`;
     return`
       <div class="card" style="margin-bottom:10px;padding:14px 16px;${overdue?'border:1px solid var(--red);background:var(--red-bg)':''}">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -2267,6 +2268,7 @@ async function renderContactList(){
           </div>
           <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
             <select onchange="changeContactTemp(${c.id},this.value)" style="font-size:11px;padding:5px 8px;border-radius:6px;border:1px solid ${meta.dim};background:${meta.bg};color:${meta.color};font-family:'DM Sans',sans-serif">
+              ${!isTagged?'<option value="" selected disabled>— Tag them —</option>':''}
               <option value="hot" ${c.temperature==='hot'?'selected':''}>🔥 Hot</option>
               <option value="warm" ${c.temperature==='warm'?'selected':''}>🌤️ Warm</option>
               <option value="cold" ${c.temperature==='cold'?'selected':''}>🧊 Cold</option>
@@ -2274,7 +2276,7 @@ async function renderContactList(){
               <option value="partner" ${c.temperature==='partner'?'selected':''}>🤝 Referral partner</option>
               <option value="trash" ${c.temperature==='trash'?'selected':''}>💩 Not interested</option>
             </select>
-            <button onclick="${overdue?`openTouchModal(${c.id},'${c.contact_name.replace(/'/g,"\\'")}','${c.temperature}',${days})`:`logTouch(${c.id})`}" style="font-size:11px;font-weight:600;padding:7px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;background:${overdue?'var(--red)':'var(--surface2)'};color:${overdue?'#fff':'var(--muted)'};white-space:nowrap">${overdue?'TOUCH ME':'Log touch'}</button>
+            ${isTagged?`<button onclick="${overdue?`openTouchModal(${c.id},'${c.contact_name.replace(/'/g,"\\'")}','${c.temperature}',${days})`:`logTouch(${c.id})`}" style="font-size:11px;font-weight:600;padding:7px 12px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;background:${overdue?'var(--red)':'var(--surface2)'};color:${overdue?'#fff':'var(--muted)'};white-space:nowrap">${overdue?'TOUCH ME':'Log touch'}</button>`:''}
           </div>
         </div>
       </div>`;
@@ -2398,7 +2400,15 @@ async function confirmTouchLogged(method){
 }
 
 async function changeContactTemp(contactId,newTemp){
-  await sb.from('agent_contacts').update({temperature:newTemp}).eq('id',contactId);
+  // If this contact was never tagged before, initialize their touch tracking too
+  const{data}=await sb.from('agent_contacts').select('last_touched,touch_count').eq('id',contactId).single();
+  const updates={temperature:newTemp,status:newTemp==='trash'?'tagged':'tagged'};
+  if(data&&!data.last_touched){
+    updates.last_touched=new Date().toISOString();
+    updates.touch_count=1;
+    updates.tagged_at=new Date().toISOString();
+  }
+  await sb.from('agent_contacts').update(updates).eq('id',contactId);
   renderContactList();
 }
 
@@ -3063,6 +3073,8 @@ function showPinError(msg){
 async function loginSuccess(name,isMaster){
   document.getElementById('login-page').classList.add('hidden');
   document.getElementById('main-app').style.display='flex';
+  // Save the session so a refresh doesn't kick them back to the pin screen
+  localStorage.setItem('sl-session',JSON.stringify({name:name,isMaster:isMaster,savedAt:new Date().toISOString()}));
   if(isMaster){
     await loadAllAgents();
     switchView('broker',document.querySelector('.nav-item'));
@@ -3084,7 +3096,33 @@ async function loginSuccess(name,isMaster){
   }
 }
 
+function logoutSession(){
+  localStorage.removeItem('sl-session');
+  location.reload();
+}
+
+async function tryRestoreSession(){
+  const saved=localStorage.getItem('sl-session');
+  if(!saved)return false;
+  try{
+    const session=JSON.parse(saved);
+    // Sessions expire after 30 days for basic security
+    const savedAt=new Date(session.savedAt);
+    const daysOld=(new Date()-savedAt)/86400000;
+    if(daysOld>30){
+      localStorage.removeItem('sl-session');
+      return false;
+    }
+    await loginSuccess(session.name,session.isMaster);
+    return true;
+  }catch(e){
+    localStorage.removeItem('sl-session');
+    return false;
+  }
+}
+
 initLogin();
+tryRestoreSession();
 
 
 function toggleTheme(){
