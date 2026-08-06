@@ -925,6 +925,12 @@ body.light .quote-bar{color:#fff}
           </div>
         </div>
         <button class="submit-btn" style="width:100%;margin-bottom:16px" onclick="goEditMoreContacts()">📇 Edit more contacts</button>
+
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button class="agent-pill active" id="cs-view-urgent-btn" onclick="setContactListView('urgent')">🔥 Needs attention</button>
+          <button class="agent-pill" id="cs-view-all-btn" onclick="setContactListView('all')">📋 View all (A-Z)</button>
+        </div>
+
         <div id="cs-list-content"></div>
       </div>
     </div>
@@ -2177,6 +2183,15 @@ function resetContactSort(){
 }
 
 // ── MY CONTACT LIST — with touch tracking & TOUCH ME urgency ────
+let csListViewMode='urgent';
+
+function setContactListView(mode){
+  csListViewMode=mode;
+  document.getElementById('cs-view-urgent-btn').classList.toggle('active',mode==='urgent');
+  document.getElementById('cs-view-all-btn').classList.toggle('active',mode==='all');
+  renderContactList();
+}
+
 function daysSince(dateStr){
   if(!dateStr)return 999;
   return Math.floor((new Date()-new Date(dateStr))/86400000);
@@ -2209,13 +2224,17 @@ async function renderContactList(){
     return;
   }
 
-  // Sort: overdue first, then by temperature priority (hot, warm, cold, closed)
+  // Sort based on view mode
   const tempPriority={hot:0,warm:1,cold:2,closed:3,partner:4};
-  contacts.sort((a,b)=>{
-    const aOver=isOverdue(a),bOver=isOverdue(b);
-    if(aOver!==bOver)return aOver?-1:1;
-    return(tempPriority[a.temperature]||9)-(tempPriority[b.temperature]||9);
-  });
+  if(csListViewMode==='urgent'){
+    contacts.sort((a,b)=>{
+      const aOver=isOverdue(a),bOver=isOverdue(b);
+      if(aOver!==bOver)return aOver?-1:1;
+      return(tempPriority[a.temperature]||9)-(tempPriority[b.temperature]||9);
+    });
+  } else {
+    contacts.sort((a,b)=>(a.contact_name||'').localeCompare(b.contact_name||''));
+  }
 
   const overdueCount=contacts.filter(isOverdue).length;
 
@@ -2224,6 +2243,10 @@ async function renderContactList(){
     html+=`<div class="card" style="margin-bottom:16px;background:var(--red-bg);border:1px solid var(--red-dim)">
       <div style="font-size:14px;font-weight:600;color:var(--red)">⚠️ ${overdueCount} contact${overdueCount===1?' needs':'s need'} a touch right now</div>
     </div>`;
+  }
+
+  if(csListViewMode==='all'){
+    html+=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">${contacts.length} contact${contacts.length===1?'':'s'}, A-Z</div>`;
   }
 
   if(contacts.length===0){
