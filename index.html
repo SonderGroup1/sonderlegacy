@@ -531,7 +531,7 @@ function hideLoginHelp(){document.getElementById('login-help-overlay').style.dis
         <table class="atable">
           <thead><tr>
             <th>Agent</th>
-            <th class="c">Calls<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">min 20</span></th>
+            <th class="c">Texts/Calls<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">min 20</span></th>
             <th class="c">Convos<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">min 5</span></th>
             <th class="c">Follow-ups<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">min 5</span></th>
             <th class="c">Referrals<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">min 5</span></th>
@@ -702,7 +702,7 @@ function hideLoginHelp(){document.getElementById('login-help-overlay').style.dis
       <div class="card">
         <div class="card-header"><span class="card-title">Daily minimums — non-negotiable</span></div>
         <div class="min-grid">
-          <div class="min-card"><div class="min-val">20</div><div class="min-lbl">Calls per day</div></div>
+          <div class="min-card"><div class="min-val">20</div><div class="min-lbl">Texts/Calls per day</div></div>
           <div class="min-card"><div class="min-val">5</div><div class="min-lbl">Real convos</div></div>
           <div class="min-card"><div class="min-val">5</div><div class="min-lbl">Follow-ups</div></div>
           <div class="min-card"><div class="min-val">5</div><div class="min-lbl">Referrals asked</div></div>
@@ -896,12 +896,19 @@ function hideLoginHelp(){document.getElementById('login-help-overlay').style.dis
                 <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">When did you last talk to them?</div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                <button onclick="setLastContacted(0,this)" class="lc-btn" data-days="0">Today</button>
+                <button onclick="handleTodayClick(this)" class="lc-btn" data-days="0">Today</button>
                 <button onclick="setLastContacted(3,this)" class="lc-btn" data-days="3">A few days ago</button>
                 <button onclick="setLastContacted(14,this)" class="lc-btn" data-days="14">2 weeks ago</button>
                 <button onclick="setLastContacted(30,this)" class="lc-btn" data-days="30">A month ago</button>
                 <button onclick="setLastContacted(90,this)" class="lc-btn" data-days="90">Months ago</button>
                 <button onclick="setLastContacted(365,this)" class="lc-btn" data-days="365">Over a year</button>
+              </div>
+              <div id="cs-today-method-wrap" style="display:none;margin-top:8px">
+                <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">How did you reach them?</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <button onclick="setTodayMethod('text',this)" class="lc-btn cs-method-btn">💬 Text</button>
+                  <button onclick="setTodayMethod('call',this)" class="lc-btn cs-method-btn">📞 Call</button>
+                </div>
               </div>
             </div>
 
@@ -1452,7 +1459,7 @@ function renderAgentView(idx){
         </div>
         <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Today's activity log</div>
         <div class="tgrid">
-          <div class="tc"><div class="tl">Calls made</div><input class="ti${ic('calls',MINS.calls)}" type="number" min="0" value="${s.calls}" oninput="upd(${idx},'calls',+this.value)"></div>
+          <div class="tc"><div class="tl">Texts/calls made</div><input class="ti${ic('calls',MINS.calls)}" type="number" min="0" value="${s.calls}" oninput="upd(${idx},'calls',+this.value)"></div>
           <div class="tc"><div class="tl">Convos</div><input class="ti${ic('convos',MINS.convos)}" type="number" min="0" value="${s.convos}" oninput="upd(${idx},'convos',+this.value)"></div>
           <div class="tc"><div class="tl">Follow-ups</div><input class="ti${ic('followups',MINS.followups)}" type="number" min="0" value="${s.followups}" oninput="upd(${idx},'followups',+this.value)"></div>
           <div class="tc"><div class="tl">Referrals</div><input class="ti${ic('refs',MINS.refs)}" type="number" min="0" value="${s.refs}" oninput="upd(${idx},'refs',+this.value)"></div>
@@ -1467,7 +1474,7 @@ function renderAgentView(idx){
           </div>
         </div>
         <div>
-          ${[{l:'Calls made',k:'calls',m:MINS.calls},{l:'Real conversations',k:'convos',m:MINS.convos},{l:'Follow-ups sent',k:'followups',m:MINS.followups},{l:'Referrals asked',k:'refs',m:MINS.refs}].map(c=>`
+          ${[{l:'Texts/calls made',k:'calls',m:MINS.calls},{l:'Real conversations',k:'convos',m:MINS.convos},{l:'Follow-ups sent',k:'followups',m:MINS.followups},{l:'Referrals asked',k:'refs',m:MINS.refs}].map(c=>`
           <div class="check-row"><span class="cl">${c.l}</span><span class="${state[idx][c.k]>=c.m?'cm':'cx'}">${state[idx][c.k]>=c.m?'✓ Met':'✗ '+state[idx][c.k]+' / '+c.m}</span></div>`).join('')}
           <div class="check-row"><span class="cl">Story posted</span><span class="${s.story?'cm':'cx'}">${s.story?'✓ Done':'✗ Not yet'}</span></div>
         </div>
@@ -1501,7 +1508,7 @@ function renderAgentView(idx){
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
           <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Daily minimum status</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            ${[{l:'Calls (20)',k:'calls',m:MINS.calls},{l:'Convos (5)',k:'convos',m:MINS.convos},{l:'Follow-ups (5)',k:'followups',m:MINS.followups},{l:'Referrals (5)',k:'refs',m:MINS.refs}].map(c=>`
+            ${[{l:'Texts/Calls (20)',k:'calls',m:MINS.calls},{l:'Convos (5)',k:'convos',m:MINS.convos},{l:'Follow-ups (5)',k:'followups',m:MINS.followups},{l:'Referrals (5)',k:'refs',m:MINS.refs}].map(c=>`
             <div style="background:${state[idx][c.k]>=c.m?'var(--teal-bg)':'var(--red-bg)'};border:1px solid ${state[idx][c.k]>=c.m?'var(--teal-dim)':'var(--red-dim)'};border-radius:8px;padding:10px;text-align:center">
               <div style="font-size:18px;font-weight:500;color:${state[idx][c.k]>=c.m?'var(--teal)':'var(--red)'}">${state[idx][c.k]}</div>
               <div style="font-size:10px;color:var(--muted);margin-top:2px">${c.l}</div>
@@ -1902,7 +1909,7 @@ async function generateDebrief(){
       if(s.noData)return`${s.name}: No data logged this week.`;
       return`${s.name}:
 - Days submitted: ${s.daysSubmitted}/7
-- Avg daily calls: ${s.avgCalls} (min: 20) — ${s.avgCalls>=MINS.calls?'MET':'MISSED'}
+- Avg daily texts/calls: ${s.avgCalls} (min: 20) — ${s.avgCalls>=MINS.calls?'MET':'MISSED'}
 - Avg daily convos: ${s.avgConvos} (min: 5) — ${s.avgConvos>=MINS.convos?'MET':'MISSED'}
 - Avg daily follow-ups: ${s.avgFollowups} (min: 5) — ${s.avgFollowups>=MINS.followups?'MET':'MISSED'}
 - Avg daily referrals asked: ${s.avgRefs} (min: 5) — ${s.avgRefs>=MINS.refs?'MET':'MISSED'}
@@ -1975,11 +1982,34 @@ let csBatchSize=25;
 let csBatchEnd=0;
 let csFullUploadCount=0;
 let csAlreadyDoneCount=0;
+let csTodayMethod=null;
 
 function setLastContacted(days,btn){
   csLastContactedDays=days;
+  csTodayMethod=null;
+  const methodWrap=document.getElementById('cs-today-method-wrap');
+  if(days===0){
+    // "Today" needs a method (text/call) before it counts as a complete selection
+    csTimeframeSelected=false;
+    if(methodWrap)methodWrap.style.display='block';
+    document.querySelectorAll('.cs-method-btn').forEach(b=>b.classList.remove('lc-selected'));
+  } else {
+    csTimeframeSelected=true;
+    if(methodWrap)methodWrap.style.display='none';
+  }
+  document.querySelectorAll('.lc-btn').forEach(b=>{if(!b.classList.contains('cs-method-btn'))b.classList.remove('lc-selected');});
+  btn.classList.add('lc-selected');
+  updateTagButtonsState();
+}
+
+function handleTodayClick(btn){
+  setLastContacted(0,btn);
+}
+
+function setTodayMethod(method,btn){
+  csTodayMethod=method;
   csTimeframeSelected=true;
-  document.querySelectorAll('.lc-btn').forEach(b=>b.classList.remove('lc-selected'));
+  document.querySelectorAll('.cs-method-btn').forEach(b=>b.classList.remove('lc-selected'));
   btn.classList.add('lc-selected');
   updateTagButtonsState();
 }
@@ -1997,7 +2027,7 @@ function updateTagButtonsState(){
     stepNum.style.background=enabled?'var(--gold)':'var(--border2)';
     stepNum.style.color=enabled?'var(--navy)':'var(--muted)';
   }
-  if(hint)hint.textContent=enabled?'Tag this contact':'Pick a timeframe above first ↑';
+  if(hint)hint.textContent=enabled?'Tag this contact':(csLastContactedDays===0?'Pick text or call above first ↑':'Pick a timeframe above first ↑');
 }
 
 const TOUCH_CADENCE={hot:3,warm:7,cold:30,closed:90,partner:90}; // days — family intentionally has no cadence
@@ -2155,9 +2185,12 @@ function showCurrentContact(){
     backBtn.style.pointerEvents=csHistory.length>0?'auto':'none';
   }
   // Reset the "when did you last talk to them" selector — nothing pre-selected
-  csLastContactedDays=0;
+  csLastContactedDays=null;
   csTimeframeSelected=false;
+  csTodayMethod=null;
   document.querySelectorAll('.lc-btn').forEach(b=>b.classList.remove('lc-selected'));
+  const methodWrap=document.getElementById('cs-today-method-wrap');
+  if(methodWrap)methodWrap.style.display='none';
   updateTagButtonsState();
 }
 
@@ -2165,7 +2198,7 @@ async function tagContact(temp){
   const c=csContacts[csIndex];
   csCounts[temp]++;
   const lastTouchedDate=new Date();
-  lastTouchedDate.setDate(lastTouchedDate.getDate()-csLastContactedDays);
+  lastTouchedDate.setDate(lastTouchedDate.getDate()-(csLastContactedDays||0));
   try{
     // Update the existing row (already saved on upload) instead of inserting a new one
     await sb.from('agent_contacts').update({
@@ -2175,7 +2208,14 @@ async function tagContact(temp){
       last_touched:lastTouchedDate.toISOString(),
       touch_count:1
     }).eq('id',c.id);
-    csHistory.push({index:csIndex,temp:temp,rowId:c.id});
+    csHistory.push({index:csIndex,temp:temp,rowId:c.id,method:csTodayMethod});
+    // If they made contact today via text or call, log it on their daily activity tracker too
+    if(csTodayMethod){
+      const idx=currentAgent!=null?currentAgent:0;
+      if(state[idx]){
+        upd(idx,'followups',(state[idx].followups||0)+1);
+      }
+    }
   }catch(e){}
   csIndex++;
   showCurrentContact();
@@ -2187,8 +2227,15 @@ async function goBackContact(){
   csCounts[last.temp]=Math.max(0,csCounts[last.temp]-1);
   try{
     // Revert the row back to untagged instead of deleting it
-    await sb.from('agent_contacts').update({temperature:null,status:'untagged'}).eq('id',last.rowId);
+    await sb.from('agent_contacts').update({temperature:null,status:'untagged',last_touched:null,touch_count:0}).eq('id',last.rowId);
   }catch(e){}
+  // Undo the daily tracker bump if this tag had logged a text/call
+  if(last.method){
+    const idx=currentAgent!=null?currentAgent:0;
+    if(state[idx]){
+      upd(idx,'followups',Math.max(0,(state[idx].followups||0)-1));
+    }
+  }
   csIndex=last.index;
   showCurrentContact();
 }
@@ -2524,7 +2571,7 @@ function renderKPI(idx){
         <div style="text-align:center;font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.05em">Your goal requires</div>
       </div>
       ${[
-        {label:'Calls/day',sonder:20,personal:personalCalls},
+        {label:'Texts/Calls per day',sonder:20,personal:personalCalls},
         {label:'Conversations/day',sonder:5,personal:5},
         {label:'Referrals asked/day',sonder:5,personal:5},
         {label:'Appts/week',sonder:1,personal:g.personal_appts||1},
@@ -2543,7 +2590,7 @@ function renderKPI(idx){
     <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">KPI status today</div>
     <div class="kpi-grid">
       ${[
-        {label:'Calls',val:s.calls,target:personalCalls,pct:callPct,unit:'today'},
+        {label:'Texts/Calls',val:s.calls,target:personalCalls,pct:callPct,unit:'today'},
         {label:'Conversations',val:s.convos,target:5,pct:convoPct,unit:'today'},
         {label:'Referrals asked',val:s.refs,target:5,pct:refPct,unit:'today'},
         {label:'Appointments set',val:s.appts,target:apptsNeeded,pct:apptPct,unit:'total'},
@@ -2588,7 +2635,7 @@ function renderKPITeam(){
         <span class="badge ${color==='green'?'b-fire':color==='yellow'?'b-push':'b-behind'}">${color==='green'?'On track':color==='yellow'?'Close':'Behind'}</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
-        ${[{l:'Calls',v:s.calls,t:20},{l:'Convos',v:s.convos,t:5},{l:'Referrals',v:s.refs,t:5},{l:'Activity',v:activityScore+'%',t:null}]
+        ${[{l:'Texts/Calls',v:s.calls,t:20},{l:'Convos',v:s.convos,t:5},{l:'Referrals',v:s.refs,t:5},{l:'Activity',v:activityScore+'%',t:null}]
           .map(k=>`<div style="text-align:center;background:var(--surface2);border-radius:8px;padding:8px">
             <div style="font-size:16px;font-weight:500;color:${k.t&&k.v>=k.t?'var(--teal)':'var(--text)'}">${k.v}${k.t?'/'+k.t:''}</div>
             <div style="font-size:10px;color:var(--muted);margin-top:2px">${k.l}</div>
