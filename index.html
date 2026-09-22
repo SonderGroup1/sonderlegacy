@@ -2209,11 +2209,11 @@ async function tagContact(temp){
       touch_count:1
     }).eq('id',c.id);
     csHistory.push({index:csIndex,temp:temp,rowId:c.id,method:csTodayMethod});
-    // If they made contact today via text or call, log it on their daily activity tracker too
+    // If they made contact today via text or call, log it as a Text/Call on their daily activity tracker
     if(csTodayMethod){
       const idx=currentAgent!=null?currentAgent:0;
       if(state[idx]){
-        upd(idx,'followups',(state[idx].followups||0)+1);
+        upd(idx,'calls',(state[idx].calls||0)+1);
       }
     }
   }catch(e){}
@@ -2233,7 +2233,7 @@ async function goBackContact(){
   if(last.method){
     const idx=currentAgent!=null?currentAgent:0;
     if(state[idx]){
-      upd(idx,'followups',Math.max(0,(state[idx].followups||0)-1));
+      upd(idx,'calls',Math.max(0,(state[idx].calls||0)-1));
     }
   }
   csIndex=last.index;
@@ -2501,10 +2501,10 @@ async function logTouch(contactId){
 
 async function confirmTouchLogged(method){
   await logTouch(touchModalContactId);
-  // Also bump the agent's daily "Follow-ups" count on their activity tracker
+  // Also bump the agent's daily Texts/Calls count on their activity tracker
   const idx=currentAgent!=null?currentAgent:0;
   if(state[idx]){
-    upd(idx,'followups',(state[idx].followups||0)+1);
+    upd(idx,'calls',(state[idx].calls||0)+1);
   }
   closeTouchModal();
   renderContactList();
